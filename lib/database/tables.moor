@@ -1,0 +1,12 @@
+CREATE TABLE article(id INTEGER PRIMARY KEY, parent INTEGER NOT NULL, title TEXT NOT NULL, url TEXT, guid TEXT NOT NULL, description TEXT, creator TEXT, pub_date INT, category TEXT, encoded TEXT, status INTEGER DEFAULT 0);
+
+CREATE TABLE feed(id INTEGER PRIMARY KEY, title TEXT NOT NULL, url TEXT NOT NULL, description TEXT, link TEXT, language TEXT, category TEXT, ttl INT, last_build_date INT, pub_date INT, status INTEGER DEFAULT 0);
+
+articles: SELECT * FROM article ORDER BY pub_date;
+feeds: SELECT * FROM feed;
+addFeed: INSERT INTO feed(title, url, description, link, language, category, ttl, last_build_date, pub_date, status) VALUES(:title, :url, :description, :link, :language, :category, :ttl, :lastBuildDate, :pubDate, :status);
+updateFeed(:title AS TEXT OR NULL, :url AS TEXT OR NULL, :description AS TEXT OR NULL, :link AS TEXT OR NULL, :language AS TEXT OR NULL, :category AS TEXT OR NULL, :ttl AS INT OR NULL, :lastBuildDate AS INT OR NULL, :pubDate AS INT OR NULL, :status AS INT OR NULL):
+		UPDATE feed SET title=coalesce(:title, title), url=coalesce(:url, url), description=coalesce(:description, description), link=coalesce(:link, link), language=coalesce(:language, language), category=coalesce(:category, category), ttl=coalesce(:ttl, ttl),
+				last_build_date=coalesce(:lastBuildDate, last_build_date), pub_date=coalesce(:pubDate, pub_date), status=coalesce(:status, status) WHERE id=:id;
+addArticle: INSERT INTO article(parent, title, url, guid, description, creator, pub_date, category, encoded, status) VALUES(:parent, :title, :url, :guid, :description, :creator, :pubDate, :category, :encoded, :status);
+changeArticleStatus(:status AS int OR NULL): UPDATE article SET status=:status WHERE id=:id;
