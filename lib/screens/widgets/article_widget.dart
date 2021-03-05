@@ -7,6 +7,7 @@ final articleProvider = StreamProvider<List<ArticleData>>((ref) {
   final db = ref.watch(rssDatabase);
   return db.articles().watch();
 });
+// final selectedArticleIdProvider = Provider<int>((ref) => -1);
 
 class ArticleView extends ConsumerWidget {
   const ArticleView({Key? key}) : super(key: key);
@@ -17,12 +18,19 @@ class ArticleView extends ConsumerWidget {
     return Card(
         child: Container(
             child: articleRef.when(
-                data: (articles) => ListView.builder(
-                      itemCount: articles.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return (articles[index].status ?? 0) >= 0 ? ArticleListItem(articleId: articles[index].id!) : Container();
-                      },
-                    ),
+                data: (articles) {
+                  // final selectedId=watch(selectedArticleIdProvider);
+                  return ListView.builder(
+                    itemCount: articles.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return (articles[index].status ?? 0) >= 0
+                          ? ArticleListItem(
+                              article: articles[index],
+                            )
+                          : Container();
+                    },
+                  );
+                },
                 loading: () => CircularProgressIndicator(),
                 error: (err, _) => Text('Error: $err'))));
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rss_feed_reader/utils/popup_card.dart';
 
 class AddFeedPopup extends StatelessWidget {
   const AddFeedPopup({Key? key}) : super(key: key);
@@ -10,7 +11,7 @@ class AddFeedPopup extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Hero(
-            tag: 'popupHero',
+            tag: HeroDialogRoute.HERO_TAG,
             child: Material(
                 color: Colors.purple,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

@@ -23,7 +23,7 @@ class FeedView extends ConsumerWidget {
             child: Column(
               children: [
                 Hero(
-                  tag: 'popupHero',
+                  tag: HeroDialogRoute.HERO_TAG,
                   child: Material(
                       child: SingleChildScrollView(
                     child: Container(

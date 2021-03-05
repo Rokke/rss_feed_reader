@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class HeroDialogRoute<T> extends PageRoute<T> {
+  static const HERO_TAG = 'popupHero';
   final WidgetBuilder _builder;
 
   HeroDialogRoute({required builder, RouteSettings? settings, bool fullscreenDialog = false})

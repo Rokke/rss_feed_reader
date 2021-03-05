@@ -3,6 +3,7 @@ import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/rss_tree.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/screens/widgets/article_widget.dart';
+import 'package:rss_feed_reader/screens/widgets/details_widget.dart';
 import 'package:rss_feed_reader/screens/widgets/feed_widget.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -29,7 +30,11 @@ class HomeScreen extends ConsumerWidget {
           builder: (context, constraints) => constraints.maxWidth > 1000
               ? Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   SizedBox(width: 200, child: FeedView()),
-                  Expanded(child: ArticleView()),
+                  Expanded(
+                      child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [Expanded(child: ArticleView()), SizedBox(height: 400, child: DetailWidget())],
+                  )),
                 ])
               : ArticleView()),
     );

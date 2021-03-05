@@ -16,7 +16,7 @@ class ItemMapper extends XMLBaseMapper {
             item.title = xNode.innerText;
             break;
           case 'description':
-            item.description = xNode.innerXml;
+            item.description = xNode.innerText;
             break;
           case 'link':
             item.link = xNode.innerXml;
@@ -26,11 +26,11 @@ class ItemMapper extends XMLBaseMapper {
           //   break;
           case 'author':
           case 'dc:creator':
-            item.author = xNode.innerXml;
+            item.author = xNode.innerText;
             break;
           case 'content:encoded':
             // case 'encoded':
-            item.encoded = xNode.innerXml;
+            item.encoded = xNode.innerText;
             break;
           case 'guid':
             item.guid = xNode.innerXml;
