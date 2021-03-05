@@ -11,4 +11,5 @@ const Map COLOR_CATEGORY = {
   'Gaming': Color.fromARGB(255, 0, 100, 0),
   'Software': Color.fromARGB(255, 0, 100, 100),
   'conference calling': Color.fromARGB(255, 0, 150, 150),
+  'Events': Color.fromARGB(255, 80, 90, 177),
 };

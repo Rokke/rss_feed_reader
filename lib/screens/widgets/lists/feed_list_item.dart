@@ -13,7 +13,7 @@ class FeedListItem extends ConsumerWidget {
   final int feedId;
   const FeedListItem({required this.feedId});
   ListTile _tileItem(ScopedReader watch, FeedData feed) => ListTile(
-        tileColor: Colors.green,
+        tileColor: Colors.grey[700],
         trailing: PopupMenuButton(
             itemBuilder: (_) => <PopupMenuItem<String>>[
                   new PopupMenuItem<String>(
@@ -42,9 +42,21 @@ class FeedListItem extends ConsumerWidget {
                       feed) //debugPrint('update: ${await watch(rssDatabase).updateFeed(null, null, null, null, null, null, DateTime.now().millisecondsSinceEpoch, null, feed.id)}'),
                   ),*/
         dense: true,
-        title: Text(feed.title),
-        subtitle: Text(
-            '${DateTime.fromMillisecondsSinceEpoch(feed.lastBuildDate ?? 0)}\n${feed.language}-${feed.link}'),
+        title: Container(
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.blue),
+              borderRadius: BorderRadius.circular(5)),
+          child: Text(feed.title),
+          //color: Colors.red,
+        ),
+        //title: Text(feed.title),
+        subtitle: Container(
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.lightBlue),
+              borderRadius: BorderRadius.circular(5)),
+          child: Text(
+              '${DateTime.fromMillisecondsSinceEpoch(feed.lastBuildDate ?? 0)}\n${feed.language}-${feed.link}'),
+        ),
         isThreeLine: true,
       );
 

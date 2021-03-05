@@ -19,7 +19,7 @@ class FeedView extends ConsumerWidget {
     final feedRef = watch(feedProvider);
     return Card(
         child: Container(
-            color: Colors.purple,
+            color: Colors.grey[700],
             child: Column(
               children: [
                 Hero(
@@ -29,11 +29,13 @@ class FeedView extends ConsumerWidget {
                     child: Container(
                       child: ElevatedButton.icon(
                           onPressed: () async {
-                            final ret = await Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                            final ret = await Navigator.of(context)
+                                .push(HeroDialogRoute(builder: (context) {
                               return AddFeedPopup();
                             }));
                             if (ret is String && ret.length > 10)
-                              RSSNetwork.updateFeed(context.read(rssDatabase), FeedData(title: '', url: ret));
+                              RSSNetwork.updateFeed(context.read(rssDatabase),
+                                  FeedData(title: '', url: ret));
                             else
                               debugPrint('Ugyldig URL: $ret');
                           },
@@ -47,11 +49,14 @@ class FeedView extends ConsumerWidget {
                       data: (feed) => ListView.builder(
                             itemCount: feed.length,
                             itemBuilder: (BuildContext context, int index) {
-                              return FeedListItem(feedId: feed[index].id!);
+                              return Container(
+                                  margin: EdgeInsets.all(5),
+                                  child: FeedListItem(feedId: feed[index].id!));
                             },
                           ),
                       loading: () => CircularProgressIndicator(),
-                      error: (error, _) => Container(child: Text('error: $error'))),
+                      error: (error, _) =>
+                          Container(child: Text('error: $error'))),
                 ),
               ],
             )));
