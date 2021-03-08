@@ -20,26 +20,29 @@ class CategoryWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ScopedReader watch) {
-    final categoryRef = watch(categoryProvider(categoryName));
-    return categoryRef.when(
-      data: (category) => Container(
-          padding: EdgeInsets.symmetric(horizontal: 4),
-          margin: EdgeInsets.all(2),
-          decoration: BoxDecoration(color: category.color != null ? Color(category.color!) : Colors.black, borderRadius: BorderRadius.circular(3)),
-          child: GestureDetector(
-              child: Hero(tag: CategoryPopup.HERO_TAG, child: Text(category.displayName ?? category.name)),
-              onTap: () async {
-                final ret = await Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-                  return CategoryPopup(category);
-                }));
-                if (ret != null) context.read(rssDatabase).updateCategory(category.name, category.displayName, ret, category.id);
-              })),
+    // final categoryRef = watch(categoryProvider(categoryName));
+    final category = CategoryData(name: categoryName);
+    return /*categoryRef.when(
+      data: (category) =>*/
+        Container(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            margin: EdgeInsets.all(2),
+            decoration: BoxDecoration(color: category.color != null ? Color(category.color!) : Colors.black, borderRadius: BorderRadius.circular(3)),
+            child: GestureDetector(
+                child: Hero(tag: CategoryPopup.HERO_TAG, child: Text(category.displayName ?? category.name)),
+                onTap: () async {
+                  final ret = await Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                    return CategoryPopup(category);
+                  }));
+                  if (ret != null) context.read(rssDatabase).updateCategory(category.name, category.displayName, ret, category.id);
+                })) /*,
       loading: () => Container(),
       error: (err, _) {
         debugPrint('Err: $err');
         // context.read(rssDatabase).addCategory(categoryName, null, null);
         return Container(color: Colors.red, child: Text(err.toString()));
       },
-    );
+    )*/
+        ;
   }
 }
