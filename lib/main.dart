@@ -12,7 +12,8 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, ScopedReader watch) {
     debugPrint('build MyApp');
     return MaterialApp(
-      theme: ThemeData.dark(),
+      theme: ThemeData(primarySwatch: Colors.deepPurple, brightness: Brightness.dark, appBarTheme: AppBarTheme(backgroundColor: Colors.deepPurple[900]), cardColor: Colors.blue[900]),
+      themeMode: ThemeMode.dark,
       home: HomeScreen(),
     );
   }

@@ -15,13 +15,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ScopedReader watch) {
     return Scaffold(
-      drawer: Drawer(
-          child: ListView(children: [
-        DrawerHeader(
-          child: Text('Sider'),
-          decoration: BoxDecoration(),
-        )
-      ])),
+      drawer: Drawer(child: FeedView()),
       appBar: AppBar(
         title: Text('RSS Oversikt'),
         actions: [IconButton(icon: Icon(Icons.play_arrow), onPressed: () => _toggleStartStop(context)), IconButton(icon: Icon(Icons.hot_tub), onPressed: () => watch(rssDatabase).createTestData())],
@@ -29,7 +23,7 @@ class HomeScreen extends ConsumerWidget {
       body: LayoutBuilder(
           builder: (context, constraints) => constraints.maxWidth > 1000
               ? Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  SizedBox(width: 200, child: FeedView()),
+                  // SizedBox(width: 250, child: FeedView()),
                   Expanded(
                       child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

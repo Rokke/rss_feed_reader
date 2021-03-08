@@ -36,7 +36,7 @@ class ItemMapper extends XMLBaseMapper {
             item.guid = xNode.innerXml;
             break;
           case 'category':
-            item.category = (item.category == null ? '' : ',') + xNode.innerText;
+            item.category = ((item.category ?? '').isEmpty ? '' : ',') + xNode.innerText;
             break;
           case 'comments':
             item.comments = xNode.innerXml;

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:rss_feed_reader/utils/popup_card.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:rss_feed_reader/database/database.dart';
 
-class AddFeedPopup extends StatelessWidget {
-  const AddFeedPopup({Key? key}) : super(key: key);
-  static const HERO_TAG = 'popupHeroAddFeed';
+class CategoryPopup extends StatelessWidget {
+  final CategoryData category;
+  const CategoryPopup(this.category, {Key? key}) : super(key: key);
+  static const HERO_TAG = 'popupHeroCategoryPopup';
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController txtUrl = TextEditingController();
+    int? _color;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -25,8 +27,9 @@ class AddFeedPopup extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            TextField(controller: txtUrl, decoration: InputDecoration(labelText: 'RSS url')),
-                            ElevatedButton(onPressed: () => Navigator.pop(context, txtUrl.text), child: Text('Legg til RSS')),
+                            Text('Velg farge for ${category.name}'),
+                            ColorPicker(pickerColor: category.color != null ? Color(category.color!) : Colors.black, onColorChanged: (color) => _color = color.value),
+                            ElevatedButton(onPressed: () => Navigator.pop(context, _color), child: Text('Endre farge')),
                           ],
                         ),
                       )),
