@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
+import 'package:rss_feed_reader/utils/misc_functions.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final detailProvider = StateProvider<ArticleData?>((ref) => null);
@@ -37,14 +38,12 @@ class DetailWidget extends ConsumerWidget {
         child: Hero(
             tag: HERO_TAG,
             child: Container(
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
                 child: (article.state != null)
                     ? Stack(children: [
                         Column(children: [
                           Container(
-                            margin: EdgeInsets.only(
-                                top: 5, right: 5, left: 5, bottom: 10),
+                            margin: EdgeInsets.only(top: 5, right: 5, left: 5, bottom: 10),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -57,16 +56,12 @@ class DetailWidget extends ConsumerWidget {
                                     children: [
                                       IconButton(
                                         icon: Icon(Icons.open_in_browser),
-                                        onPressed: () =>
-                                            _launchURL(article.state!.url),
+                                        onPressed: () => _launchURL(article.state!.url),
                                       ),
                                       IconButton(
                                           icon: Icon(Icons.delete),
                                           onPressed: () {
-                                            context
-                                                .read(rssDatabase)
-                                                .changeArticleStatus(
-                                                    -1, article.state!.id);
+                                            context.read(rssDatabase).changeArticleStatus(-1, article.state!.id);
                                             article.state = null;
                                           }),
                                     ],
@@ -77,8 +72,7 @@ class DetailWidget extends ConsumerWidget {
                           ),
                           Container(
                             padding: EdgeInsets.all(5),
-                            child: Text('${article.state!.description}',
-                                style: TextStyle(fontSize: 16)),
+                            child: Text('${article.state!.description}', style: TextStyle(fontSize: 16)),
                           ),
                         ]),
                         Row(
@@ -88,24 +82,9 @@ class DetailWidget extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.end,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                (article.state!.creator != null)
-                                    ? Text("${article.state!.creator}",
-                                        style: TextStyle(fontSize: 12))
-                                    : Text("Atricle creator N/A",
-                                        style: TextStyle(fontSize: 12)),
-                                (article.state!.creator != null)
-                                    ? Text("${article.state!.category}",
-                                        style: TextStyle(fontSize: 12))
-                                    : Text("Article category N/A",
-                                        style: TextStyle(fontSize: 12)),
-                                (article.state!.pubDate != null)
-                                    ? Text(
-                                        new DateTime.fromMillisecondsSinceEpoch(
-                                                article.state!.pubDate!)
-                                            .toString(),
-                                        style: TextStyle(fontSize: 12))
-                                    : Text("Pusblish date N/A",
-                                        style: TextStyle(fontSize: 12)),
+                                (article.state!.creator != null) ? Text("${article.state!.creator}", style: TextStyle(fontSize: 12)) : Text("Atricle creator N/A", style: TextStyle(fontSize: 12)),
+                                (article.state!.category != null) ? Text("${article.state!.category}", style: TextStyle(fontSize: 12)) : Text("Article category N/A", style: TextStyle(fontSize: 12)),
+                                (article.state!.pubDate != null) ? Text(dateTimeFormat(DateTime.fromMillisecondsSinceEpoch(article.state!.pubDate!)), style: TextStyle(fontSize: 12)) : Text("Pusblish date N/A", style: TextStyle(fontSize: 12)),
                               ],
                             ),
                           ],

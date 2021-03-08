@@ -4,7 +4,8 @@ import 'package:rss_feed_reader/database/database.dart';
 
 class CategoryPopup extends StatelessWidget {
   final CategoryData category;
-  const CategoryPopup(this.category, {Key? key}) : super(key: key);
+  final int id;
+  const CategoryPopup(this.id, this.category, {Key? key}) : super(key: key);
   static const HERO_TAG = 'popupHeroCategoryPopup';
 
   @override
@@ -14,7 +15,7 @@ class CategoryPopup extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Hero(
-            tag: HERO_TAG,
+            tag: '$HERO_TAG$id${category.name}',
             child: Material(
                 color: Colors.purple,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -28,7 +29,7 @@ class CategoryPopup extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('Velg farge for ${category.name}'),
-                            ColorPicker(pickerColor: category.color != null ? Color(category.color!) : Colors.black, onColorChanged: (color) => _color = color.value),
+                            LayoutBuilder(builder: (context, constraints) => constraints.maxWidth >= 500 ? ColorPicker(pickerColor: category.color != null ? Color(category.color!) : Colors.black, onColorChanged: (color) => _color = color.value) : Container()),
                             ElevatedButton(onPressed: () => Navigator.pop(context, _color), child: Text('Endre farge')),
                           ],
                         ),

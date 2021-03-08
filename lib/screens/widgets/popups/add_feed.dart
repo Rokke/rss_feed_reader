@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rss_feed_reader/utils/popup_card.dart';
 
 class AddFeedPopup extends StatelessWidget {
   const AddFeedPopup({Key? key}) : super(key: key);

@@ -3,7 +3,7 @@ import 'package:rss_feed_reader/models/xml_mapper/base_mapper.dart';
 import 'package:xml/xml.dart';
 
 class ItemMapper extends XMLBaseMapper {
-  String? title, link, description, author, comments, enclosure, guid, source, category, encoded;
+  String? title, link, description, author, comments, guid, source, encoded, category;
   int? pubDate;
 
   ItemMapper();
@@ -21,29 +21,28 @@ class ItemMapper extends XMLBaseMapper {
           case 'link':
             item.link = xNode.innerXml;
             break;
-          // case 'atom:link':
-          //   item.atomlink = xNode.innerXml;
-          //   break;
+          case 'atom:link': // Backup if guid is replaced with atom:link from the provider
+            if (item.guid == null) item.guid = xNode.innerXml;
+            break;
           case 'author':
           case 'dc:creator':
             item.author = xNode.innerText;
             break;
           case 'content:encoded':
-            // case 'encoded':
             item.encoded = xNode.innerText;
             break;
           case 'guid':
             item.guid = xNode.innerXml;
             break;
           case 'category':
-            item.category = ((item.category ?? '').isEmpty ? '' : ',') + xNode.innerText;
+            final cat = xNode.innerText.split(',').where((element) => element.isNotEmpty).toList();
+            if (cat.length > 0) {
+              item.category = ((item.category == null) ? '' : '${item.category},') + cat.join(',');
+            }
             break;
           case 'comments':
-            item.comments = xNode.innerXml;
+            item.comments = xNode.innerText;
             break;
-          // case 'enclosure':
-          //   item.enclosure = xNode.outerXml;
-          //   break;
           case 'source':
             item.source = xNode.innerText;
             break;
@@ -54,16 +53,19 @@ class ItemMapper extends XMLBaseMapper {
             else
               log('Error pubDate format: ${xNode.innerXml}');
             break;
-          // case 'image':
-          // case 'cloud':
-          // case 'docs':
-          // case 'copyright':
-          // case 'managingEditor':
-          // case 'webMaster':
-          // case 'skipHours':
-          // case 'skipDays':
-          // case 'item':
-          //   break;
+          case 'media:content':
+          case 'enclosure':
+          case 'image':
+          case 'cloud':
+          case 'docs':
+          case 'copyright':
+          case 'managingEditor':
+          case 'webMaster':
+          case 'skipHours':
+          case 'skipDays':
+          case 'item':
+          case 'og':
+            break;
           default:
             log('Ukjent element: ${xNode.name}=>${xNode.text}');
         }

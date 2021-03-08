@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/screens/widgets/lists/article_list_item.dart';
+import 'package:rss_feed_reader/screens/widgets/feed_widget.dart';
 
 final articleProvider = StreamProvider<List<ArticleData>>((ref) {
   final db = ref.watch(rssDatabase);
-  return db.articles().watch();
+  final selectedFeed = ref.watch(selectedFeedId);
+  return db.articles(selectedFeed.state).watch();
 });
 // final selectedArticleIdProvider = Provider<int>((ref) => -1);
 

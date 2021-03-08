@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/screens/widgets/category_widget.dart';
 import 'package:rss_feed_reader/screens/widgets/details_widget.dart';
-import 'package:rss_feed_reader/utils/popup_card.dart';
+import 'package:rss_feed_reader/utils/misc_functions.dart';
 
 class ArticleListItem extends ConsumerWidget {
   final ArticleData article;
@@ -14,44 +14,26 @@ class ArticleListItem extends ConsumerWidget {
     final selectedArticle = watch(detailProvider);
     try {
       return Container(
-        decoration: BoxDecoration(
-            color: selectedArticle.state?.id == article.id
-                ? Colors.blue[900]
-                : Colors.blue,
-            borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: selectedArticle.state?.id == article.id ? Colors.blue[900] : Colors.blue, borderRadius: BorderRadius.circular(10)),
         margin: EdgeInsets.all(2),
         child: Card(
-          color: selectedArticle.state?.id != article.id
-              ? Colors.blue[900]
-              : Colors.blue,
+          color: selectedArticle.state?.id != article.id ? Colors.blue[900] : Colors.blue,
           elevation: selectedArticle.state?.id == article.id ? 0 : 10,
           child: Stack(
             children: [
               ListTile(
-                leading: IconButton(
-                    icon: Icon(Icons.visibility),
-                    onPressed: () => selectedArticle.state = article),
+                leading: IconButton(icon: Icon(Icons.visibility), onPressed: () => selectedArticle.state = article),
                 dense: true,
                 title: Text(article.title),
                 subtitle: Text(article.url ?? 'Ingen link'),
                 trailing: IconButton(
                     icon: Icon(Icons.delete),
                     onPressed: () {
-                      context
-                          .read(rssDatabase)
-                          .changeArticleStatus(-1, article.id);
+                      context.read(rssDatabase).changeArticleStatus(-1, article.id);
                       selectedArticle.state = null;
                     }),
               ),
-              if (article.category != null)
-                Positioned(
-                    right: 50,
-                    top: 0,
-                    child: Wrap(
-                        children: article.category!
-                            .split(',')
-                            .map((e) => CategoryWidget(e))
-                            .toList())),
+              if (article.category != null) Positioned(right: 50, top: 0, child: Wrap(children: article.category!.split(',').map((e) => CategoryWidget(article.id!, e)).toList())),
               if (article.pubDate != null)
                 Positioned(
                   right: 50,
@@ -59,12 +41,8 @@ class ArticleListItem extends ConsumerWidget {
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 4),
                     margin: EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(3)),
-                    child: Text(new DateTime.fromMillisecondsSinceEpoch(
-                            article.pubDate!)
-                        .toString()),
+                    decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(3)),
+                    child: Text(dateTimeFormat(DateTime.fromMillisecondsSinceEpoch(article.pubDate!))),
                   ),
                 ),
             ],

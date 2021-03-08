@@ -4,58 +4,57 @@ import 'package:rss_feed_reader/utils/popup_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
 
-final categoryProvider =
-    StreamProvider.autoDispose.family<CategoryData, String>((ref, category) {
+final categoryProvider = StreamProvider.autoDispose.family<CategoryData?, String>((ref, category) {
   final db = ref.watch(rssDatabase);
-  final ret = db.findCategory(category).watchSingle();
-  () async {
-    if (await ret.isEmpty)
-      db.into(db.category).insert(CategoryData(name: category));
-    debugPrint('Added new category: $category');
-  }();
+  final ret = db.findCategory(category).watchSingleOrNull();
   return ret;
 });
 
 class CategoryWidget extends ConsumerWidget {
   final String categoryName;
-  const CategoryWidget(this.categoryName, {Key? key}) : super(key: key);
+  final int articleId;
+  const CategoryWidget(this.articleId, this.categoryName, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, ScopedReader watch) {
-    // final categoryRef = watch(categoryProvider(categoryName));
-    final category = CategoryData(name: categoryName);
-    return /*categoryRef.when(
-      data: (category) =>*/
-        (category.name == "")
-            ? Container()
-            : Container(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                margin: EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                    color: category.color != null
-                        ? Color(category.color!)
-                        : Colors.black,
-                    borderRadius: BorderRadius.circular(3)),
-                child: GestureDetector(
-                    child: Hero(
-                        tag: CategoryPopup.HERO_TAG,
-                        child: Text(category.displayName ?? category.name)),
-                    onTap: () async {
-                      final ret = await Navigator.of(context)
-                          .push(HeroDialogRoute(builder: (context) {
-                        return CategoryPopup(category);
-                      }));
-                      if (ret != null)
-                        context.read(rssDatabase).updateCategory(category.name,
-                            category.displayName, ret, category.id);
-                    })) /*,
+    final categoryRef = watch(categoryProvider(categoryName));
+    return categoryRef.when(
+      data: (category) {
+        final backgroundColor = category?.color != null ? Color(category!.color!) : Colors.black;
+        final textColor = backgroundColor.computeLuminance() < 0.5 ? Colors.white : Colors.black;
+        return Container(
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(3)),
+            child: GestureDetector(
+                child: Hero(
+                    tag: '${CategoryPopup.HERO_TAG}$articleId$categoryName',
+                    child: Material(
+                        color: backgroundColor,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        child: SingleChildScrollView(
+                            child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 4),
+                                margin: EdgeInsets.all(2),
+                                child: Text(
+                                  category?.displayName ?? categoryName,
+                                  style: TextStyle(color: textColor),
+                                ))))),
+                onTap: () async {
+                  final ret = await Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                    return CategoryPopup(articleId, category ?? CategoryData(name: categoryName));
+                  }));
+                  if (ret != null) {
+                    if (category != null)
+                      context.read(rssDatabase).updateCategory(categoryName, category.displayName, ret, category.id);
+                    else
+                      context.read(rssDatabase).addCategory(categoryName, categoryName, ret);
+                  }
+                }));
+      },
       loading: () => Container(),
       error: (err, _) {
         debugPrint('Err: $err');
-        // context.read(rssDatabase).addCategory(categoryName, null, null);
         return Container(color: Colors.red, child: Text(err.toString()));
       },
-    )*/
-        ;
+    );
   }
 }

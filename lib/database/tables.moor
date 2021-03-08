@@ -4,7 +4,7 @@ CREATE TABLE feed(id INTEGER PRIMARY KEY, title TEXT NOT NULL, url TEXT NOT NULL
 
 CREATE TABLE category(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, display_name TEXT, color INT);
 
-articles: SELECT * FROM article ORDER BY pub_date;
+articles(:id AS INT OR NULL): SELECT * FROM article WHERE :id IS NULL OR parent=:id ORDER BY pub_date;
 feeds: SELECT * FROM feed WHERE ifnull(status,0)>-1;
 addFeed: INSERT INTO feed(title, url, description, link, language, category, ttl, last_build_date, pub_date, status) VALUES(:title, :url, :description, :link, :language, :category, :ttl, :lastBuildDate, :pubDate, :status);
 updateFeed(:title AS TEXT OR NULL, :url AS TEXT OR NULL, :description AS TEXT OR NULL, :link AS TEXT OR NULL, :language AS TEXT OR NULL, :category AS TEXT OR NULL, :ttl AS INT OR NULL, :lastBuildDate AS INT OR NULL, :pubDate AS INT OR NULL, :status AS INT OR NULL):
