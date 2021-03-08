@@ -31,7 +31,7 @@ class DetailWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ScopedReader watch) {
     // final article = watch(selectedDetailProvider.state);
-    final article = watch(detailProvider).state;
+    final article = watch(detailProvider);
     debugPrint('Details build');
     return Card(
         child: Hero(
@@ -39,17 +39,17 @@ class DetailWidget extends ConsumerWidget {
             child: Container(
                 decoration:
                     BoxDecoration(borderRadius: BorderRadius.circular(10)),
-                child: (article != null)
-                    ? Column(
-                        children: [
+                child: (article.state != null)
+                    ? Stack(children: [
+                        Column(children: [
                           Container(
                             margin: EdgeInsets.only(
-                                top: 5, right: 5, left: 5, bottom: 15),
+                                top: 5, right: 5, left: 5, bottom: 10),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  '${article.title}',
+                                  '${article.state!.title}',
                                   style: TextStyle(fontSize: 28),
                                 ),
                                 Container(
@@ -58,23 +58,59 @@ class DetailWidget extends ConsumerWidget {
                                       IconButton(
                                         icon: Icon(Icons.open_in_browser),
                                         onPressed: () =>
-                                            _launchURL(article.url),
+                                            _launchURL(article.state!.url),
                                       ),
                                       IconButton(
                                           icon: Icon(Icons.delete),
-                                          onPressed: () => context
-                                              .read(rssDatabase)
-                                              .changeArticleStatus(
-                                                  -1, article.id)),
+                                          onPressed: () {
+                                            context
+                                                .read(rssDatabase)
+                                                .changeArticleStatus(
+                                                    -1, article.state!.id);
+                                            article.state = null;
+                                          }),
                                     ],
                                   ),
                                 )
                               ],
                             ),
                           ),
-                          Text('${article.description}'),
-                        ],
-                      )
+                          Container(
+                            padding: EdgeInsets.all(5),
+                            child: Text('${article.state!.description}',
+                                style: TextStyle(fontSize: 16)),
+                          ),
+                        ]),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                (article.state!.creator != null)
+                                    ? Text("${article.state!.creator}",
+                                        style: TextStyle(fontSize: 12))
+                                    : Text("Atricle creator N/A",
+                                        style: TextStyle(fontSize: 12)),
+                                (article.state!.creator != null)
+                                    ? Text("${article.state!.category}",
+                                        style: TextStyle(fontSize: 12))
+                                    : Text("Article category N/A",
+                                        style: TextStyle(fontSize: 12)),
+                                (article.state!.pubDate != null)
+                                    ? Text(
+                                        new DateTime.fromMillisecondsSinceEpoch(
+                                                article.state!.pubDate!)
+                                            .toString(),
+                                        style: TextStyle(fontSize: 12))
+                                    : Text("Pusblish date N/A",
+                                        style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ])
                     : Container())));
   }
 }
