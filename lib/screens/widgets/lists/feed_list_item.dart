@@ -70,7 +70,7 @@ class FeedListItem extends ConsumerWidget {
                     left: 0,
                     top: 0,
                     child: GestureDetector(
-                      onTap: () => isSelected ? null : feed.id,
+                      onTap: () => selected.state = isSelected ? null : feed.id,
                       child: Container(
                         padding: EdgeInsets.all(5),
                         decoration: BoxDecoration(color: Theme.of(context).appBarTheme.backgroundColor, border: Border.all(color: Colors.deepPurple, width: 2), borderRadius: BorderRadius.circular(5)),
