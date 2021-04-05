@@ -7,37 +7,33 @@ import 'package:rss_feed_reader/utils/misc_functions.dart';
 
 class ArticleListItem extends ConsumerWidget {
   final ArticleData article;
-  const ArticleListItem({required this.article});
-
-  _removeArticle(BuildContext context, StateController selectedArticle, bool isSelected) {
-    context.read(rssDatabase).changeArticleStatus(-1, article.id);
-    if (isSelected) selectedArticle.state = null;
-  }
+  final Function() onRemoveArticle;
+  const ArticleListItem({required this.article, required this.onRemoveArticle});
 
   @override
   Widget build(BuildContext context, ScopedReader watch) {
-    final selectedArticle = watch(detailProvider);
-    final isSelected = selectedArticle.state?.id != article.id;
+    final selectedArticle = watch(selectedArticleId);
+    final isSelected = selectedArticle.state != article.id;
     try {
       return Dismissible(
         key: Key(article.id.toString()),
-        onDismissed: (direction) => _removeArticle(context, selectedArticle, isSelected),
+        onDismissed: (direction) => onRemoveArticle(), //_removeArticle(context, selectedArticle, isSelected),
         child: Container(
-          decoration: BoxDecoration(color: selectedArticle.state?.id == article.id ? Colors.blue[900] : Colors.blue, borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(color: selectedArticle.state == article.id ? Colors.blue[900] : Colors.blue, borderRadius: BorderRadius.circular(10)),
           margin: EdgeInsets.all(2),
           child: Card(
             color: isSelected ? Colors.blue[900] : Colors.blue,
-            elevation: selectedArticle.state?.id == article.id ? 0 : 10,
+            elevation: selectedArticle.state == article.id ? 0 : 10,
             child: Stack(
               children: [
                 ListTile(
-                    leading: IconButton(icon: Icon(Icons.visibility), onPressed: () => selectedArticle.state = article),
+                    leading: IconButton(icon: Icon(Icons.visibility), onPressed: () => selectedArticle.state = article.id!),
                     dense: true,
                     title: Text(article.title),
                     subtitle: Text(article.url ?? 'Ingen link'),
                     trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () => _removeArticle(context, selectedArticle, isSelected),
+                      icon: article.status == ArticleTableStatus.FAVORITE ? Icon(Icons.favorite, color: Colors.red) : Icon(Icons.delete),
+                      onPressed: () => article.status == ArticleTableStatus.FAVORITE ? context.read(rssDatabase).changeArticleStatus(ArticleTableStatus.UNREAD, article.id) : onRemoveArticle(),
                     )),
                 if (article.category != null) Positioned(right: 50, top: 0, child: Wrap(children: article.category!.split(',').map((e) => CategoryWidget(article.id!, e)).toList())),
                 if (article.pubDate != null)

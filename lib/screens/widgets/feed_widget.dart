@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
+import 'package:rss_feed_reader/models/rss_tree.dart';
 import 'package:rss_feed_reader/providers/network.dart';
 import 'package:rss_feed_reader/screens/widgets/lists/feed_list_item.dart';
 import 'package:rss_feed_reader/screens/widgets/popups/add_feed.dart';
@@ -48,6 +49,18 @@ class FeedView extends ConsumerWidget {
                           label: Text('Ny RSS')),
                     ),
                   )),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                child: Container(
+                  child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.read(rssProvider).findFeedToUpdate();
+                        Navigator.pop(context);
+                      },
+                      icon: Icon(Icons.add_circle),
+                      label: Text('Oppdater RSS')),
                 ),
               ),
             ],

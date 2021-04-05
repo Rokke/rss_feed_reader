@@ -79,7 +79,7 @@ class ChannelMapper extends XMLBaseMapper {
           default:
             log('Ukjent element: ${xNode.name}=>${xNode.text}');
         }
-      } else if (xNode.nodeType != XmlNodeType.TEXT || xNode.text.isNotEmpty) log('Ukjent nodetype: ${xNode.nodeType}=>${xNode.outerXml}');
+      } else if (xNode.nodeType != XmlNodeType.TEXT || xNode.text.trim().isNotEmpty) log('Ukjent nodetype: ${xNode.nodeType}=>${xNode.outerXml}');
     });
     return channel;
   }

@@ -16,7 +16,7 @@ class ItemMapper extends XMLBaseMapper {
             item.title = xNode.innerText;
             break;
           case 'description':
-            item.description = xNode.innerText;
+            item.description = xNode.innerXml;
             break;
           case 'link':
             item.link = xNode.innerXml;
@@ -65,12 +65,18 @@ class ItemMapper extends XMLBaseMapper {
           case 'skipDays':
           case 'item':
           case 'og':
+          case 'site':
+          case 'slash:comments':
+          case 'post-id':
+          case 'wfw:commentRss':
+          case 'discourse:topicArchived':
+          case 'discourse:topicClosed':
+          case 'discourse:topicPinned':
             break;
           default:
             log('Ukjent element: ${xNode.name}=>${xNode.text}');
         }
-      } else
-        log('Ukjent nodetype: ${xNode.nodeType}=>${xNode.outerXml}');
+      } else if (xNode.outerXml.trim().isNotEmpty) log('Ukjent nodetype: ${xNode.nodeType}=>${xNode.outerXml}');
     });
     return item;
   }

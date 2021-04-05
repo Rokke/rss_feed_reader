@@ -1,0 +1,35 @@
+@startuml DBModel
+class Article{
+	+id: int
+	+parent: int
+	+title: string
+	+url: string
+	+guid: string
+	+description: string
+	+creator: string
+	+pub_date: DateTime
+	+category: string
+	+encoded: string
+	+status: int
+}
+class Feed{
+	+id: int
+	+title: string
+	+url: string
+	+description: string
+	+link: string
+	+language: string
+	+category: string
+	+ttl: int
+	+last_build_date: DateTime
+	+pub_date: DateTime
+	+status: int
+}
+Article::parent --> Feed::id
+class Category{
+	+id: int
+	+name: string
+	+display_name: string
+	+color: int
+}
+@enduml

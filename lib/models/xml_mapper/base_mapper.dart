@@ -32,6 +32,6 @@ class XMLBaseMapper {
 
   DateTime? parseRSSString(String val) {
     final parts = val.split(' ');
-    return DateTime.tryParse('${parts[3]}-${getMonthNumber(parts[2])!}-${parts[1]}T${parts[4]}${parts[5]}');
+    return DateTime.tryParse('${parts[3]}-${getMonthNumber(parts[2])!}-${parts[1].padLeft(2, "0")}T${parts[4].padLeft(2, "0")}${parts[5].padLeft(2, "0")}');
   }
 }

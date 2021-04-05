@@ -9,10 +9,15 @@ final selectedFeedProvider = StreamProvider.autoDispose.family<FeedData, int>((r
   final db = ref.watch(rssDatabase);
   return (db.select(db.feed)..where((tbl) => tbl.id.equals(_id))).watchSingle();
 });
+final numberOfFeedsProvider = StreamProviderFamily<int, int>((ref, id) {
+  final db = ref.watch(rssDatabase);
+  return db.numberOfArticles(id).watchSingle();
+});
 
 const MENU_ITEMS = const [
   {'text': 'Oppdater RSS', 'icon': Icons.refresh, 'value': 'update'},
-  {'text': 'Slett RSS', 'icon': Icons.delete, 'value': 'delete'}
+  {'text': 'Merk alle lest', 'icon': Icons.visibility, 'value': 'read'},
+  {'text': 'Slett RSS', 'icon': Icons.delete, 'value': 'delete'},
 ];
 
 class FeedListItem extends ConsumerWidget {
@@ -27,6 +32,7 @@ class FeedListItem extends ConsumerWidget {
           final selected = watch(selectedFeedId);
           final isSelected = selected.state == feed.id;
           ValueNotifier<bool> isLoading = ValueNotifier(false);
+          final numberOfUnreadArticles = watch(numberOfFeedsProvider(feedId));
           return Card(
               elevation: isSelected ? 0 : 6,
               margin: EdgeInsets.all(0),
@@ -59,7 +65,10 @@ class FeedListItem extends ConsumerWidget {
                                     }();
                                     break;
                                   case 'delete':
-                                    context.read(rssDatabase).updateFeed(feed.title, feed.url, feed.description, feed.link, feed.language, feed.category, feed.ttl, feed.lastBuildDate, feed.pubDate, -1, feed.id);
+                                    context.read(rssDatabase).deleteFeed(feed.id);
+                                    break;
+                                  case 'read':
+                                    context.read(rssDatabase).markAllRead(ArticleTableStatus.READ, feedId);
                                     break;
                                 }
                               },
@@ -71,14 +80,22 @@ class FeedListItem extends ConsumerWidget {
                     top: 0,
                     child: GestureDetector(
                       onTap: () => selected.state = isSelected ? null : feed.id,
-                      child: Container(
-                        padding: EdgeInsets.all(5),
-                        decoration: BoxDecoration(color: Theme.of(context).appBarTheme.backgroundColor, border: Border.all(color: Colors.deepPurple, width: 2), borderRadius: BorderRadius.circular(5)),
-                        child: Center(
-                            child: Text(
-                          feed.title,
-                          style: Theme.of(context).textTheme.button,
-                        )),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(5),
+                            decoration: BoxDecoration(color: Theme.of(context).appBarTheme.backgroundColor, border: Border.all(color: Colors.deepPurple, width: 2), borderRadius: BorderRadius.circular(5)),
+                            child: Center(
+                                child: Text(
+                              feed.title,
+                              style: Theme.of(context).textTheme.button,
+                            )),
+                          ),
+                          Container(
+                              padding: EdgeInsets.symmetric(vertical: 5, horizontal: 8),
+                              decoration: BoxDecoration(color: Theme.of(context).accentColor, border: Border.all(color: Colors.purple, width: 2), borderRadius: BorderRadius.circular(15)),
+                              child: Text((numberOfUnreadArticles.when(data: (val) => val.toString(), loading: () => '?', error: (_, __) => 'E')), style: TextStyle(color: Theme.of(context).primaryColor))),
+                        ],
                       ),
                     ),
                   ),
@@ -88,6 +105,15 @@ class FeedListItem extends ConsumerWidget {
                     child: Container(
                       decoration: BoxDecoration(border: Border.all(color: Colors.lightBlue), borderRadius: BorderRadius.circular(5)),
                       child: Text(dateTimeFormat(DateTime.fromMillisecondsSinceEpoch(feed.lastBuildDate ?? 0))),
+                    ),
+                  ),
+                  Positioned(
+                    right: 3,
+                    bottom: 0,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(border: Border.all(color: Colors.lightBlue), borderRadius: BorderRadius.circular(5)),
+                      child: Text(timeSinceNow(feed.lastCheck ?? 0)),
                     ),
                   ),
                 ]),

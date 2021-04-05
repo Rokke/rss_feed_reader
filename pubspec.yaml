@@ -12,7 +12,8 @@ dependencies:
     sdk: flutter
   dio: ^4.0.0-beta2
   flutter_colorpicker: ^0.4.0-nullsafety.0
-  flutter_riverpod: ^0.13.1
+  flutter_html: ^2.0.0-nullsafety.0
+  flutter_riverpod: ^0.14.0
   moor: ^4.1.0
   path: ^1.8.0
   path_provider: ^2.0.0
