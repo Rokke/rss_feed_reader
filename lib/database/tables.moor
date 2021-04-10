@@ -1,19 +1,31 @@
-CREATE TABLE article(id INTEGER PRIMARY KEY, parent INTEGER NOT NULL, title TEXT NOT NULL, url TEXT, guid TEXT NOT NULL, description TEXT, creator TEXT, pub_date INT, category TEXT, encoded TEXT, status INT DEFAULT 0);
-
 CREATE TABLE feed(id INTEGER PRIMARY KEY, title TEXT NOT NULL, url TEXT NOT NULL, description TEXT, link TEXT, language TEXT, category TEXT, ttl INT, last_build_date INT, pub_date INT, status INTEGER DEFAULT 0, last_check INT);
+CREATE UNIQUE INDEX idx_feed_url ON feed (url);
+
+CREATE TABLE article(id INTEGER PRIMARY KEY, parent INTEGER NOT NULL REFERENCES feed(id), title TEXT NOT NULL, url TEXT, guid TEXT NOT NULL, description TEXT, creator TEXT, pub_date INT, category TEXT, encoded TEXT, status INT DEFAULT 0, active BOOL NOT NULL DEFAULT true);
+CREATE UNIQUE INDEX idx_article_id ON article(parent, url);
 
 CREATE TABLE category(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, display_name TEXT, color INT);
+CREATE UNIQUE INDEX idx_category_text ON category(name);
 
+CREATE TABLE feed_fav(id INTEGER PRIMARY KEY, feed_id INTEGER REFERENCES feed(id) NOT NULL, url TEXT NOT NULL);
+CREATE UNIQUE INDEX idx_feed_fav_id ON feed_fav(feed_id);
+
+fetchOldestFeed(:msEpochNow AS INT): SELECT id, (:msEpochNow - (coalesce(last_check,0) + (coalesce(ttl,30)*60000))) as total FROM feed WHERE total>0 ORDER BY total DESC LIMIT 1;
+numberOfArticlesStatus(:feed_id AS INT OR NULL): SELECT COUNT(*) FROM article WHERE (:feed_id is NULL OR parent=:feed_id) AND ifnull(status,0)==:status;
+
+/*
 articles(:id AS INT OR NULL): SELECT * FROM article WHERE (status IS NULL OR status>=0) AND (:id IS NULL OR parent=:id) ORDER BY pub_date;
 fetchArticle: SELECT * FROM article WHERE id=:id;
-feeds: SELECT * FROM feed WHERE ifnull(status,0)>-1;
+feeds: SELECT * FROM feed WHERE ifnull(status,0)>-1 ORDER BY title;
+feedFavs: SELECT * FROM feed_fav;
 fetchFeed: SELECT * FROM feed WHERE id=:id;
-fetchOldestFeed(:msEpochNow AS INT): SELECT id, (:msEpochNow - (coalesce(last_check,0) + (coalesce(ttl,30)*60000))) as total FROM feed WHERE total>0 ORDER BY total DESC LIMIT 1;
+fetchFeedFav: SELECT * FROM feed_fav WHERE id=:id;
 addFeed: INSERT INTO feed(title, url, description, link, language, category, ttl, last_build_date, pub_date, status, last_check) VALUES(:title, :url, :description, :link, :language, :category, :ttl, :lastBuildDate, :pubDate, :status, :lastCheck);
 updateFeed(:title AS TEXT OR NULL, :url AS TEXT OR NULL, :description AS TEXT OR NULL, :link AS TEXT OR NULL, :language AS TEXT OR NULL, :category AS TEXT OR NULL, :ttl AS INT OR NULL, :lastBuildDate AS INT OR NULL, :pubDate AS INT OR NULL, :status AS INT OR NULL):
 		UPDATE feed SET title=coalesce(:title, title), url=coalesce(:url, url), description=coalesce(:description, description), link=coalesce(:link, link), language=coalesce(:language, language), category=coalesce(:category, category), ttl=coalesce(:ttl, ttl),
 				last_build_date=coalesce(:lastBuildDate, last_build_date), pub_date=coalesce(:pubDate, pub_date), status=coalesce(:status, status), last_check=:lastCheck WHERE id=:id;
 updateFeedLastCheck: UPDATE feed SET last_check=:lastCheck WHERE id=:id;
+updateFeedFavUrl: UPDATE feed_fav SET url=:url WHERE id=:id;
 deleteFeed: UPDATE feed SET status=-1 WHERE id=:id;
 addArticle: INSERT INTO article(parent, title, url, guid, description, creator, pub_date, category, encoded, status) VALUES(:parent, :title, :url, :guid, :description, :creator, :pubDate, :category, :encoded, :status);
 changeArticleStatus(:status AS int OR NULL): UPDATE article SET status=:status WHERE id=:id;
@@ -23,4 +35,4 @@ updateCategory: UPDATE category SET name=:name, display_name=:displayName, color
 findCategory: SELECT * FROM category WHERE name=:name;
 markAllRead: UPDATE article SET status=:status WHERE parent=:parent_id AND ifnull(status,0)>-1;
 
-numberOfArticles: SELECT COUNT(*) FROM article WHERE parent=:parent_id AND ifnull(status,0)>-1;
+*/

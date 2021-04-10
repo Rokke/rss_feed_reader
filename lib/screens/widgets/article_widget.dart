@@ -1,45 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
-import 'package:rss_feed_reader/screens/widgets/details_widget.dart';
+import 'package:rss_feed_reader/models/selected_article_helper.dart';
 import 'package:rss_feed_reader/screens/widgets/feed_widget.dart';
 import 'package:rss_feed_reader/screens/widgets/lists/article_list_item.dart';
 
-final articleProvider = StreamProvider<List<ArticleData>>((ref) {
+final articlesProvider = StreamProvider<List<ArticleData>>((ref) {
   final db = ref.watch(rssDatabase);
   final selectedFeed = ref.watch(selectedFeedId);
-  return db.articles(selectedFeed.state).watch();
+  return db.articles(feedId: selectedFeed.state, status: ref.watch(filterShowArticleStatus).state);
 });
-// final selectedArticleIdProvider = Provider<int>((ref) => -1);
+final selectedArticleHelperProvider = StateProvider<SelectedArticleHelper?>((ref) => null);
 
 class ArticleView extends ConsumerWidget {
   const ArticleView({Key? key}) : super(key: key);
 
-  _removeArticle(BuildContext context, List<ArticleData> articles, int index) {
-    final selectedIndex = context.read(selectedArticleId);
-    // print('_remove: ${selectedIndex} == ${articles[index].id}');
-    if (selectedIndex.state == articles[index].id) selectedIndex.state = articles.length > 1 ? articles[articles.length - 1 > index ? index + 1 : index - 1].id! : 0;
-    context.read(rssDatabase).changeArticleStatus(ArticleTableStatus.READ, articles[index].id);
+  static _changeArticleStatus(BuildContext context, List<ArticleData> articles, int index, StateController<SelectedArticleHelper?> selected, int status) async {
+    final newIndex = articles.length - 1 > index ? index + 1 : index - 1;
+    selected.state = articles.length <= 1 ? null : SelectedArticleHelper(articles[newIndex], (status) => _changeArticleStatus(context, articles, newIndex, selected, status));
+    context.read(rssDatabase).updateArticleStatus(articleId: articles[index].id!, status: status);
   }
 
   @override
   Widget build(BuildContext context, ScopedReader watch) {
-    final articleRef = watch(articleProvider);
+    final articleRef = watch(articlesProvider);
     return Card(
         child: Container(
             child: articleRef.when(
                 data: (articles) {
-                  // final selectedId=watch(selectedArticleIdProvider);
                   return (articles.length > 0) // && articles.indexWhere((element) => (element.status ?? 0) >= 0) >= 0)
                       ? ListView.builder(
                           itemCount: articles.length,
                           itemBuilder: (BuildContext context, int index) {
-                            return (articles[index].status ?? 0) >= 0
-                                ? ArticleListItem(
-                                    article: articles[index],
-                                    onRemoveArticle: () => _removeArticle(context, articles, index),
-                                  )
-                                : Container(child: Text('tomt'));
+                            return Consumer(
+                              builder: (context, itemwatch, _) {
+                                final selected = itemwatch(selectedArticleHelperProvider);
+                                return ArticleListItem(
+                                  article: articles[index],
+                                  isSelected: articles[index].id == selected.state?.articleData?.id,
+                                  onRemoveArticle: () => _changeArticleStatus(context, articles, index, selected, ArticleTableStatus.READ),
+                                  onSelectedArticle: () {
+                                    debugPrint('onSelectedArticle: $index');
+                                    selected.state = SelectedArticleHelper(articles[index], (int status) => _changeArticleStatus(context, articles, index, selected, status));
+                                  },
+                                );
+                              },
+                            );
                           },
                         )
                       : Center(

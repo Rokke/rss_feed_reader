@@ -2,30 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
+import 'package:rss_feed_reader/screens/widgets/article_widget.dart';
 import 'package:rss_feed_reader/utils/misc_functions.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-final selectedArticleId = StateProvider<int>((ref) => 0);
-final detailProvider = StreamProvider<ArticleData?>((ref) {
-  final selectedId = ref.watch(selectedArticleId);
-  if (selectedId.state > 0) {
-    return ref.read(rssDatabase).fetchArticle(selectedId.state).watchSingleOrNull();
-  }
-  return Stream.value(null); // as Future<ArticleData>;
-});
-// final selectedDetailProvider = StateNotifierProvider((ref) => SelectedDetail());
-
-/* class SelectedDetail extends StateNotifier<ArticleData> {
-  SelectedDetail() : super(ArticleData(parent: 0, title: '', guid: ''));
-  changeSelected(ArticleData articleData) {
-    debugPrint('change article');
-    state = articleData.copyWith();
-  }
-}
- */
 class DetailWidget extends ConsumerWidget {
-  // static const String HERO_TAG = 'detailSelectedHero';
-  // final int articleId;
   const DetailWidget({Key? key}) : super(key: key);
 
   _launchURL(url) async {
@@ -38,76 +19,81 @@ class DetailWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ScopedReader watch) {
-    // final article = watch(selectedDetailProvider.state);
-    final articleProvider = watch(detailProvider);
-    // final found = watch(rssDatabase).articles(article.id).watchSingle();
+    final selectedArticleData = watch(selectedArticleHelperProvider);
     debugPrint('Details build');
-    return articleProvider.when(
-      data: (article) {
-        return Card(
-            child: Container(
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
-                child: (article != null)
-                    ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                        Container(
-                          color: Colors.blue[800],
-                          padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${article.title}',
-                                style: TextStyle(fontSize: 28),
-                              ),
-                              Container(
-                                child: Row(
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(Icons.open_in_browser),
-                                      onPressed: () => _launchURL(article.url),
-                                    ),
-                                    IconButton(
-                                        icon: Icon(
-                                          Icons.favorite,
-                                          color: article.status == ArticleTableStatus.FAVORITE ? Colors.red : null,
-                                        ),
-                                        onPressed: () {
-                                          context.read(rssDatabase).changeArticleStatus(article.status != ArticleTableStatus.FAVORITE ? ArticleTableStatus.FAVORITE : ArticleTableStatus.UNREAD, article.id);
-                                          // context.read(detailProvider).state = context.read(detailProvider).state;
-                                        }),
-                                  ],
+    return Card(
+        child: Container(
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+            child: (selectedArticleData.state?.articleData != null)
+                ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Container(
+                      color: Colors.blue[800],
+                      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${selectedArticleData.state!.articleData!.title}',
+                              style: Theme.of(context).textTheme.headline6,
+                            ),
+                          ),
+                          Container(
+                            child: Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.open_in_browser),
+                                  onPressed: () => _launchURL(selectedArticleData.state!.articleData!.url),
                                 ),
-                              )
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                            child: Container(
-                          // constraints: BoxConstraints.expand(),
-                          padding: EdgeInsets.all(5),
-                          child: SingleChildScrollView(child: Html(data: article.description!)),
-                        )),
-                        Container(
-                          color: Colors.purple[900],
-                          // constraints: BoxConstraints.expand(height: 200),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              (article.creator != null) ? Text("${article.creator}", style: TextStyle(fontSize: 12)) : Text("Atricle creator N/A", style: TextStyle(fontSize: 12)),
-                              (article.category != null) ? Text("${article.category}", style: TextStyle(fontSize: 12)) : Text("Article category N/A", style: TextStyle(fontSize: 12)),
-                              (article.pubDate != null) ? Text(dateTimeFormat(DateTime.fromMillisecondsSinceEpoch(article.pubDate!)), style: TextStyle(fontSize: 12)) : Text("Pusblish date N/A", style: TextStyle(fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                      ])
-                    : Center(
-                        child: Text(
-                        'Ingen artikkel valgt',
-                        style: Theme.of(context).textTheme.headline3,
-                      ))));
-      },
-      loading: () => Container(child: Text('loading')),
-      error: (err, stack) => Container(child: Text('error: $err, $stack')),
-    );
+                                IconButton(
+                                    icon: Icon(
+                                      Icons.favorite,
+                                      color: selectedArticleData.state!.articleData!.status == ArticleTableStatus.FAVORITE ? Colors.red : null,
+                                    ),
+                                    onPressed: () {
+                                      selectedArticleData.state!.onStatusChanged(selectedArticleData.state!.articleData!.status != ArticleTableStatus.FAVORITE ? ArticleTableStatus.FAVORITE : ArticleTableStatus.UNREAD);
+                                    }),
+                                IconButton(
+                                    icon: Icon(
+                                      selectedArticleData.state!.articleData!.status == ArticleTableStatus.READ ? Icons.visibility_off : Icons.visibility,
+                                      color: selectedArticleData.state!.articleData!.status == ArticleTableStatus.READ ? Colors.green : null,
+                                    ),
+                                    onPressed: () {
+                                      selectedArticleData.state!.onStatusChanged(selectedArticleData.state!.articleData!.status != ArticleTableStatus.READ ? ArticleTableStatus.READ : ArticleTableStatus.UNREAD);
+                                    }),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                        child: Container(
+                      padding: EdgeInsets.all(5),
+                      child: selectedArticleData.state!.articleData!.description != null
+                          ? SingleChildScrollView(child: Html(data: selectedArticleData.state!.articleData!.description!))
+                          : Center(
+                              child: Text(
+                              'Ingen beskrivelse',
+                              style: Theme.of(context).textTheme.headline3,
+                            )),
+                    )),
+                    Container(
+                      color: Colors.purple[900],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          (selectedArticleData.state!.articleData!.creator != null) ? Text("${selectedArticleData.state!.articleData!.creator}", style: TextStyle(fontSize: 12)) : Text("Atricle creator N/A", style: TextStyle(fontSize: 12)),
+                          (selectedArticleData.state!.articleData!.category != null) ? Text("${selectedArticleData.state!.articleData!.category}", style: TextStyle(fontSize: 12)) : Text("Article category N/A", style: TextStyle(fontSize: 12)),
+                          (selectedArticleData.state!.articleData!.pubDate != null) ? Text(dateTimeFormat(DateTime.fromMillisecondsSinceEpoch(selectedArticleData.state!.articleData!.pubDate!)), style: TextStyle(fontSize: 12)) : Text("Pusblish date N/A", style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  ])
+                : Center(
+                    child: Text(
+                    'Ingen artikkel valgt',
+                    style: Theme.of(context).textTheme.headline3,
+                  ))));
   }
 }

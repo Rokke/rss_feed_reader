@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moor/moor.dart' as moor;
 import 'package:rss_feed_reader/screens/widgets/popups/color_picker.dart';
 import 'package:rss_feed_reader/utils/popup_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +7,7 @@ import 'package:rss_feed_reader/database/database.dart';
 
 final categoryProvider = StreamProvider.autoDispose.family<CategoryData?, String>((ref, category) {
   final db = ref.watch(rssDatabase);
-  final ret = db.findCategory(category).watchSingleOrNull();
+  final ret = db.fetchCategoryByName(categoryName: category);
   return ret;
 });
 
@@ -44,9 +45,9 @@ class CategoryWidget extends ConsumerWidget {
                   }));
                   if (ret != null) {
                     if (category != null)
-                      context.read(rssDatabase).updateCategory(categoryName, category.displayName, ret, category.id);
+                      context.read(rssDatabase).updateCategory(categoryId: category.id, categoryCompanion: CategoryCompanion(name: moor.Value(categoryName), displayName: moor.Value(category.displayName), color: ret));
                     else
-                      context.read(rssDatabase).addCategory(categoryName, categoryName, ret);
+                      context.read(rssDatabase).insertCategory(CategoryCompanion.insert(name: categoryName, displayName: moor.Value(categoryName), color: ret));
                   }
                 }));
       },

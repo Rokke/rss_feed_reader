@@ -47,9 +47,4 @@ app.*.map.json
 /android/app/release
 pubspec.lock
 lib/database/database.g.dart
-windows/flutter/generated_plugin_registrant.cc
-windows/flutter/generated_plugin_registrant.h
-windows/flutter/generated_plugins.cmake
-windows/flutter/generated_plugin_registrant.cc
-windows/flutter/generated_plugin_registrant.h
-windows/flutter/generated_plugins.cmake
+windows/flutter

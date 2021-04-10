@@ -1,4 +1,7 @@
+import 'package:logging/logging.dart';
+
 class XMLBaseMapper {
+  static final _log = Logger('XMLBaseMapper');
   String? getMonthNumber(String month) {
     switch (month) {
       case 'Jan':
@@ -32,6 +35,12 @@ class XMLBaseMapper {
 
   DateTime? parseRSSString(String val) {
     final parts = val.split(' ');
-    return DateTime.tryParse('${parts[3]}-${getMonthNumber(parts[2])!}-${parts[1].padLeft(2, "0")}T${parts[4].padLeft(2, "0")}${parts[5].padLeft(2, "0")}');
+    try {
+      if (parts.length > 5) return DateTime.tryParse('${parts[3]}-${getMonthNumber(parts[2])!}-${parts[1].padLeft(2, "0")}T${parts[4]}${parts[5][0] == '+' ? parts[5].padLeft(2, "0") : ""}');
+      return DateTime.tryParse(val);
+    } catch (err) {
+      _log.severe('Illegal date: $val', err);
+      throw err;
+    }
   }
 }

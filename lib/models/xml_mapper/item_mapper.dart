@@ -1,8 +1,11 @@
-import 'dart:developer';
+import 'package:logging/logging.dart';
+import 'package:moor/moor.dart' as moor;
+import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/xml_mapper/base_mapper.dart';
 import 'package:xml/xml.dart';
 
 class ItemMapper extends XMLBaseMapper {
+  static final _log = Logger('ItemMapper');
   String? title, link, description, author, comments, guid, source, encoded, category;
   int? pubDate;
 
@@ -12,16 +15,23 @@ class ItemMapper extends XMLBaseMapper {
     xEl.children.forEach((xNode) {
       if (xNode is XmlElement) {
         switch (xNode.name.toString()) {
-          case 'title': //TODO: Endre til innerXml når flutter_html støtter nullsafety
+          case 'title':
             item.title = xNode.innerText;
             break;
+          case 'media:group':
+            if (item.description == null && xNode.getElement('media:description') != null) {
+              item.description = xNode.getElement('media:description')!.innerXml;
+            }
+            break;
           case 'description':
+          case 'content':
             item.description = xNode.innerXml;
             break;
           case 'link':
-            item.link = xNode.innerXml;
+            item.link = xNode.innerText.isEmpty ? xNode.getAttribute('href') : xNode.innerText;
             break;
-          case 'atom:link': // Backup if guid is replaced with atom:link from the provider
+          case 'atom:link':
+          case 'id': // Backup if guid is replaced with atom:link from the provider
             if (item.guid == null) item.guid = xNode.innerXml;
             break;
           case 'author':
@@ -47,11 +57,16 @@ class ItemMapper extends XMLBaseMapper {
             item.source = xNode.innerText;
             break;
           case 'pubDate':
-            final dt = item.parseRSSString(xNode.innerText);
-            if (dt != null)
-              item.pubDate = dt.millisecondsSinceEpoch;
-            else
-              log('Error pubDate format: ${xNode.innerXml}');
+          case 'updated':
+          case 'published':
+          case 'atom:updated':
+            if (item.pubDate == null) {
+              final dt = item.parseRSSString(xNode.innerText);
+              if (dt != null)
+                item.pubDate = dt.millisecondsSinceEpoch;
+              else
+                _log.warning('Error pubDate format: ${xNode.innerXml}');
+            }
             break;
           case 'media:content':
           case 'enclosure':
@@ -72,12 +87,43 @@ class ItemMapper extends XMLBaseMapper {
           case 'discourse:topicArchived':
           case 'discourse:topicClosed':
           case 'discourse:topicPinned':
+          case 'media:credit':
+          case 'feedburner:origLink':
+          case 'trackback:ping':
+          case 'pingback:server':
+          case 'pingback:target':
+          case 's:doctype':
+          case 'wfw:comment':
+          case 'item:media':
+          case 'thr:total':
+          case 'itunes:summary':
+          case 'itunes:image':
+          case 'itunes:explicit':
+          case 'itunes:duration':
+          case 'media:thumbnail':
+          case 'itunes:keywords':
+          case 'imgRegular':
+          case 'yt:videoId':
+          case 'yt:channelId':
+          case 'dc:date':
             break;
           default:
-            log('Ukjent element: ${xNode.name}=>${xNode.text}');
+            if (!xNode.name.toString().startsWith('vg:')) _log.info('Ukjent feed element: ${xNode.name}=>${xNode.text.length > 100 ? xNode.text.substring(0, 100) + "..." : xNode.text}');
         }
-      } else if (xNode.outerXml.trim().isNotEmpty) log('Ukjent nodetype: ${xNode.nodeType}=>${xNode.outerXml}');
+      } else if (xNode.nodeType != XmlNodeType.COMMENT && xNode.outerXml.trim().isNotEmpty) _log.info('Ukjent nodetype: ${xNode.nodeType}=>${xNode.outerXml}');
     });
     return item;
   }
+  ArticleCompanion toArticleCompanion(int parent) => ArticleCompanion(
+        parent: moor.Value(parent),
+        title: moor.Value(title!),
+        url: moor.Value(link),
+        guid: moor.Value(guid ?? link!),
+        description: moor.Value(description),
+        creator: moor.Value(author),
+        pubDate: moor.Value(pubDate),
+        category: moor.Value(category),
+        encoded: moor.Value(encoded),
+      );
+  // addArticle(newId, item.title!, item.link, item.guid ?? item.link!, item.description, item.author, item.pubDate, item.category, item.encoded, null);
 }
