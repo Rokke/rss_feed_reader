@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/providers/network.dart';
+import 'package:rss_feed_reader/providers/tweet_list.dart';
 
 final monitoringRunning = StateProvider<bool>((ref) => false);
 const TTL_MS = 60000;
@@ -23,11 +24,11 @@ class RSSHead extends StateNotifier<RSSTree> {
     _log.info('startMonitoring($postponeStart)');
     read(monitoringRunning).state = true;
     if (postponeStart != null) await Future.delayed(postponeStart);
-    _timer = Timer.periodic(Duration(seconds: 10), (_) {
+    _timer = Timer.periodic(Duration(seconds: 10), (_) async {
       if (!busy) {
         busy = true;
         try {
-          findFeedToUpdate();
+          if (!await findFeedToUpdate()) read(providerTweetHeader).checkAndUpdateTweet();
         } catch (err) {
           _log.severe('Monitor error', err);
         } finally {
@@ -39,7 +40,7 @@ class RSSHead extends StateNotifier<RSSTree> {
 
   bool get started => _timer != null;
 
-  Future<int> findFeedToUpdate() async {
+  Future<bool> findFeedToUpdate() async {
     final rssDb = read(rssDatabase);
     final msEpoch = DateTime.now().millisecondsSinceEpoch;
     final found = await rssDb.fetchOldestFeed(msEpoch).getSingleOrNull();
@@ -49,13 +50,16 @@ class RSSHead extends StateNotifier<RSSTree> {
         final addedFeeds = await RSSNetwork.updateFeed(rssDb, feed);
         // read(unreadArticles).state.changeValue(addedFeeds);
         _log.info('Added $addedFeeds');
-        return addedFeeds;
+        return true;
       } else
         _log.severe('illegal feed: ${found.id}');
     } else
       _log.finer('Nothing to update');
-    return 0;
+    return false;
   }
+
+  // Future<bool> findTweetToUpdate() async {
+  // }
 
   stopMonitoring() {
     debugPrint('stopMonitoring');

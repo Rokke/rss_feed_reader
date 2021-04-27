@@ -8,6 +8,7 @@ import 'package:rss_feed_reader/screens/widgets/appbar_widget.dart';
 import 'package:rss_feed_reader/screens/widgets/article_widget.dart';
 import 'package:rss_feed_reader/screens/widgets/details_widget.dart';
 import 'package:rss_feed_reader/screens/widgets/feed_widget.dart';
+import 'package:rss_feed_reader/screens/widgets/twitter_widget.dart';
 
 final applicationVersionProvider = FutureProvider<PackageInfo>((ref) {
   final rss = ref.watch(rssProvider);
@@ -44,8 +45,9 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ScopedReader watch) {
     final appVersionFuture = watch(applicationVersionProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      drawer: Container(width: MediaQuery.of(context).size.width / 1.25, child: Drawer(child: FeedView())),
+      drawer: Container(width: screenWidth < 500 ? screenWidth / 1.15 : 500, child: Drawer(child: FeedView())),
       appBar: appVersionFuture.when(
           data: (appVersion) => PreferredSize(
                 preferredSize: Size.fromHeight(50),
@@ -57,10 +59,19 @@ class HomeScreen extends ConsumerWidget {
               ),
           error: (_, __) => AppBar(title: Text('RSS Oversikt'))),
       body: LayoutBuilder(
-          builder: (context, constraints) => constraints.maxWidth > 1000
+          builder: (context, constraints) => constraints.maxHeight > 700
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [Expanded(child: ArticleView()), SizedBox(height: 600, child: DetailWidget())],
+                  children: [
+                    SizedBox(height: constraints.maxHeight / 3, child: ArticleView()),
+                    Expanded(
+                        child: Stack(
+                      children: [
+                        DetailWidget(),
+                        Positioned(right: 0, bottom: 15, child: Container(constraints: BoxConstraints.tightFor(width: TwitterWidget.TWITTER_LIST_WIDTH, height: 500), child: TwitterWidget())),
+                      ],
+                    ))
+                  ],
                 )
               : ArticleView()),
     );

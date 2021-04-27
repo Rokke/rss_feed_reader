@@ -3,16 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/rss_tree.dart';
 import 'package:rss_feed_reader/providers/network.dart';
+import 'package:rss_feed_reader/providers/tweet_list.dart';
 import 'package:rss_feed_reader/screens/widgets/lists/feed_list_item.dart';
 import 'package:rss_feed_reader/screens/widgets/popups/add_feed.dart';
+import 'package:rss_feed_reader/screens/widgets/twitter_user_widget.dart';
 import 'package:rss_feed_reader/utils/popup_card.dart';
 
-final feedProvider = StreamProvider<List<FeedData>>((ref) {
+final feedProvider = FutureProvider<List<FeedData>>((ref) {
   final db = ref.watch(rssDatabase);
-  return db.feeds();
+  return db.feeds().first;
 });
 final selectedFeedId = StateProvider<int?>((ref) => null);
 final filterShowArticleStatus = StateProvider<int>((ref) => 0);
+final filterShowTitleText = StateProvider<String>((ref) => '');
 final selectedFeedStatusArticlesCount = StreamProvider<int>((ref) {
   final db = ref.watch(rssDatabase);
   final filter = ref.watch(filterShowArticleStatus);
@@ -25,7 +28,7 @@ class FeedView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ScopedReader watch) {
     final feedRef = watch(feedProvider);
-    // print('dato: ${DateTime.tryParse("2021-04-06T15:50:23+0100")}');
+    debugPrint('dato: ${DateTime.tryParse("2021-04-06T15:50:23+0100")}');
     return Container(
       color: Theme.of(context).appBarTheme.backgroundColor,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -108,15 +111,62 @@ class FeedView extends ConsumerWidget {
         ),
         Flexible(
             child: feedRef.when(
-                data: (feed) => ListView.builder(
-                      itemCount: feed.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return Container(margin: EdgeInsets.symmetric(horizontal: 10, vertical: 3), child: FeedListItem(feedId: feed[index].id!));
-                      },
-                    ),
+                data: (feeds) {
+                  debugPrint('feedRef rebuild');
+                  return DrawerListItems(feeds);
+                },
                 loading: () => CircularProgressIndicator(),
                 error: (error, _) => Container(child: Text('error: $error')))),
       ]),
+    );
+  }
+}
+
+class DrawerListItems extends ConsumerWidget {
+  final List<FeedData> feeds;
+  DrawerListItems(this.feeds, {Key? key}) : super(key: key);
+  final ValueNotifier<bool> feedSelected = ValueNotifier(true);
+
+  @override
+  Widget build(BuildContext context, ScopedReader watch) {
+    final twitterRef = watch(providerTweetHeader);
+    return ValueListenableBuilder(
+      valueListenable: feedSelected,
+      builder: (context, bool isFeed, child) => Column(
+        children: [
+          if (twitterRef.tweetUsers.length > 0)
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              ElevatedButton.icon(
+                onPressed: !feedSelected.value ? () => feedSelected.value = true : null,
+                icon: Icon(Icons.rss_feed, color: Colors.red),
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text('RSS (${feeds.length})'),
+                ),
+              ),
+              ElevatedButton.icon(
+                  onPressed: feedSelected.value ? () => feedSelected.value = false : null,
+                  icon: Image(
+                    image: AssetImage('assets/images/twitter.png'),
+                    color: Colors.blue,
+                  ),
+                  label: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text('Twitter (${twitterRef.tweetUsers.length})'),
+                  )),
+            ]),
+          Flexible(
+            child: isFeed
+                ? ListView.builder(
+                    itemCount: feeds.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Container(margin: EdgeInsets.symmetric(horizontal: 10, vertical: 3), child: FeedListItem(feedId: feeds[index].id!));
+                    },
+                  )
+                : TwitterUserWidget(),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:rss_feed_reader/database/database.dart';
+import 'package:rss_feed_reader/providers/tweet_list.dart';
 import 'package:rss_feed_reader/screens/widgets/feed_widget.dart';
 import 'package:rss_feed_reader/screens/widgets/monitor_button.dart';
 
@@ -10,11 +11,21 @@ class CustomAppBarWidget extends ConsumerWidget {
   static final _log = Logger('CustomAppBarWidget');
   final PackageInfo appVersion;
   const CustomAppBarWidget(this.appVersion, {Key? key}) : super(key: key);
+  _test(BuildContext context) async {
+    debugPrint('_test()');
+    try {
+      final tweetHead = context.read(providerTweetHeader);
+      debugPrint('checkAndUpdateTweet: ${await tweetHead.checkAndUpdateTweet()}');
+    } catch (err) {
+      debugPrint('Error: $err');
+    }
+  }
 
   @override
   Widget build(BuildContext context, ScopedReader watch) {
     final selectedFilter = watch(filterShowArticleStatus).state;
     final articleCountFuture = watch(selectedFeedStatusArticlesCount);
+    // final txtSearchFilter = TextEditingController(text: watch(filterShowTitleText).state);
     return AppBar(
       title: Text('RSS Oversikt - ${appVersion.version}${(appVersion.buildNumber.isNotEmpty) ? ".${appVersion.buildNumber}" : ""}'),
       actions: [
@@ -25,25 +36,33 @@ class CustomAppBarWidget extends ConsumerWidget {
             child: articleCountFuture.when(
                 data: (articleCount) => Row(
                       children: [
-                        DropdownButton(
-                          items: ['Nye', 'Lest', 'Favoriter']
-                              .map((e) => DropdownMenuItem(
-                                    child: Text(e),
-                                    value: e,
-                                  ))
-                              .toList(),
-                          value: selectedFilter == -1
-                              ? 'Lest'
-                              : selectedFilter == 1
-                              ? 'Favoriter'
-                              : 'Nye',
-                          onChanged: (val) => context.read(filterShowArticleStatus).state = (val == 'Favoriter'
-                              ? 1
-                              : val == 'Lest'
-                              ? -1
-                              : 0),
+                        // Container(
+                        //   constraints: BoxConstraints.tightFor(width: 30),
+                        //   child: TextField(
+                        //     controller: txtSearchFilter,
+                        //   ),
+                        // ),
+                        Container(
+                          margin: EdgeInsets.symmetric(horizontal: 8),
+                          child: DropdownButton(
+                            items: ['Nye', 'Lest', 'Favoriter']
+                                .map((e) => DropdownMenuItem(
+                                      child: Text(e),
+                                      value: e,
+                                    ))
+                                .toList(),
+                            value: selectedFilter == -1
+                                ? 'Lest'
+                                : selectedFilter == 1
+                                    ? 'Favoriter'
+                                    : 'Nye',
+                            onChanged: (val) => context.read(filterShowArticleStatus).state = (val == 'Favoriter'
+                                ? 1
+                                : val == 'Lest'
+                                    ? -1
+                                    : 0),
+                          ),
                         ),
-                        SizedBox(width: 8),
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 7),
                           decoration: BoxDecoration(border: Border.all(), borderRadius: BorderRadius.circular(6), color: articleCount > 0 ? Colors.blue : null),
@@ -91,7 +110,11 @@ class CustomAppBarWidget extends ConsumerWidget {
                 error: (_, __) => Text('E')),
           ),
         ),
-        MonitorButton()
+        MonitorButton(),
+        IconButton(
+          icon: Icon(Icons.hot_tub),
+          onPressed: () => _test(context),
+        )
       ],
     );
   }

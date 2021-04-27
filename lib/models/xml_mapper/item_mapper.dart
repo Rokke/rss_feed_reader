@@ -1,3 +1,4 @@
+import 'package:html_unescape/html_unescape.dart';
 import 'package:logging/logging.dart';
 import 'package:moor/moor.dart' as moor;
 import 'package:rss_feed_reader/database/database.dart';
@@ -25,7 +26,7 @@ class ItemMapper extends XMLBaseMapper {
             break;
           case 'description':
           case 'content':
-            item.description = xNode.innerXml;
+            item.description = HtmlUnescape().convert(xNode.innerXml);
             break;
           case 'link':
             item.link = xNode.innerText.isEmpty ? xNode.getAttribute('href') : xNode.innerText;

@@ -10,10 +10,19 @@ CREATE UNIQUE INDEX idx_category_text ON category(name);
 CREATE TABLE feed_fav(id INTEGER PRIMARY KEY, feed_id INTEGER REFERENCES feed(id) NOT NULL, url TEXT NOT NULL);
 CREATE UNIQUE INDEX idx_feed_fav_id ON feed_fav(feed_id);
 
+CREATE TABLE tweet_user(id INTEGER PRIMARY KEY, tweet_user_id int NOT NULL, username TEXT NOT NULL, name TEXT NOT NULL, display_name TEXT, profile_url TEXT, status INT DEFAULT 0, ttl INT DEFAULT 10, last_check INT);
+CREATE UNIQUE INDEX idx_tweet_user_id ON tweet_user(tweet_user_id);
+CREATE TABLE tweet(tweet_id int PRIMARY KEY NOT NULL, parent INTEGER REFERENCES tweet_user(id) NOT NULL);
+
 fetchOldestFeed(:msEpochNow AS INT): SELECT id, (:msEpochNow - (coalesce(last_check,0) + (coalesce(ttl,30)*60000))) as total FROM feed WHERE total>0 ORDER BY total DESC LIMIT 1;
 numberOfArticlesStatus(:feed_id AS INT OR NULL): SELECT COUNT(*) FROM article WHERE (:feed_id is NULL OR parent=:feed_id) AND ifnull(status,0)==:status;
+fetchOldestTweetUser(:msEpochNow AS INT): SELECT id, (:msEpochNow - (coalesce(last_check,0) + (coalesce(ttl,30)*60000))) as total FROM tweet_user WHERE total>0 ORDER BY total DESC LIMIT 1;
 
 /*
+CREATE TABLE tweet(id INTEGER PRIMARY KEY, tweet_id int NOT NULL, parent INTEGER REFERENCES tweet_user(id) NOT NULL, title TEXT NOT NULL, created_at INT NOT NULL, status INTEGER DEFAULT 0, active BOOL NOT NULL DEFAULT true);
+CREATE UNIQUE INDEX idx_tweet_id ON tweet(parent,tweet_id);
+fetchTweetWithUsername: SELECT t.id, t.tweet_id, t.parent, t.title, t.created_at, coalesce(u.display_name, u.name) AS name, u.username FROM tweet t INNER JOIN tweet_user u ON u.id=t.parent WHERE t.status=:status ORDER BY created_at DESC;
+
 articles(:id AS INT OR NULL): SELECT * FROM article WHERE (status IS NULL OR status>=0) AND (:id IS NULL OR parent=:id) ORDER BY pub_date;
 fetchArticle: SELECT * FROM article WHERE id=:id;
 feeds: SELECT * FROM feed WHERE ifnull(status,0)>-1 ORDER BY title;

@@ -48,3 +48,4 @@ app.*.map.json
 pubspec.lock
 lib/database/database.g.dart
 windows/flutter
+lib/secret.dart

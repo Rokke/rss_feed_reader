@@ -12,7 +12,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:rss_feed_reader/models/xml_mapper/channel_mapper.dart';
 import 'package:rss_feed_reader/providers/network.dart';
-import 'package:rss_feed_reader/utils/misc_functions.dart';
 
 part 'database.g.dart';
 
@@ -31,7 +30,7 @@ class AppDb extends _$AppDb {
   AppDb() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
   Future<int> updateActiveStatus(int feedId, List<int> activeIds) async {
     return (update(article)..where((tbl) => tbl.active.equals(true) & tbl.parent.equals(feedId) & tbl.id.isNotIn(activeIds))).write(ArticleCompanion(active: Value(false)));
   }
@@ -79,6 +78,33 @@ class AppDb extends _$AppDb {
   Stream<CategoryData> fetchCategory({required int categoryId}) => (select(category)..where((tbl) => tbl.id.equals(categoryId))).watchSingle();
   Stream<CategoryData?> fetchCategoryByName({required String categoryName}) => (select(category)..where((tbl) => tbl.name.equals(categoryName))).watchSingleOrNull();
   // numberOfUnreadArticles() => article.id.count(filter: article.status.equals(0) | article.status.equals(null));
+  Stream<List<TweetUserData>> tweetUsers() => (select(tweetUser)..orderBy([(tbl) => OrderingTerm.asc(tbl.username)])).watch();
+  Future<int> insertTweetUser(TweetUserCompanion newUser) async {
+    final newId = await into(tweetUser).insert(newUser);
+    return newId;
+  }
+
+  // Future<bool> createAndUpdateTweets(int parent, List<TweetCompanion> tweetsFound) async {
+  //   final tweetDataActive = await (select(tweet)..where((tbl) => tbl.active.equals(true) & tbl.parent.equals(parent))).get(); // tbl.tweetId.isNotIn(tweetsFound.map((e) => e.tweetId.value).toList()))).get();
+  //   debugPrint('fetchNewTweets(active: $tweetDataActive, ${tweetsFound.map((e) => e.tweetId)})');
+  //   final tweetToCreate = tweetsFound
+  //       .where((tweetData) => !tweetDataActive.any((tf) {
+  //             if (tweetData.tweetId.value == tf.tweetId) {
+  //               tweetDataActive.remove(tf);
+  //               return true;
+  //             }
+  //             return false;
+  //           }))
+  //       .toList();
+  //   debugPrint('tweetToCreate: $tweetToCreate, inactivate: $tweetDataActive');
+  //   for (int i = 0; i < tweetToCreate.length; i++) await insertTweet(tweetToCreate[i]);
+  //   return true;
+  // }
+
+  Future<int> insertTweet(TweetCompanion tweetCompanion) async => into(tweet).insert(tweetCompanion);
+  // Future<int> updateTweetStatus({required int id, int status = ArticleTableStatus.READ}) => (update(tweet)..where((tbl) => tbl.id.equals(id))).write(TweetCompanion(status: Value(status)));
+  Future<TweetUserData?> fetchTweetUser(int id) => (select(tweetUser)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+  Stream<List<TweetData>> tweets() => select(tweet).watch();
   extractJSON(String filename) async {
     _log.info('extractJSON($filename)');
     final res = await select(feed).join([innerJoin(feedFav, feedFav.feedId.equalsExp(feed.id))]).get();
@@ -111,31 +137,19 @@ class AppDb extends _$AppDb {
   MigrationStrategy get migration => MigrationStrategy(
       onCreate: (Migrator m) => m.createAll(),
       onUpgrade: (Migrator m, int from, int to) async {
-/*        if (from < 4) {
-          _log.info('migration version<3: $from');
-          m.addColumn(feed, feed.lastCheck);
-          m.createTable(feedFav);
-          final feedTable = await select(feed).get();
-          for (int i = 0; i < feedTable.length; i++) {
-            await into(feedFav).insert(FeedFavCompanion.insert(feedId: feedTable[i].id!, url: fetchHostUrl(feedTable[i].link ?? feedTable[i].url) + '/favicon.ico'));
-          }
-          await m.addColumn(article, article.active);
-          update(article).write(ArticleCompanion(active: Value(true)));
+        if (from < 4) {
+          _log.info('migration version<4: $from');
+          throw InvalidDataException('DB migration not supported');
         }
         if (from < 5) {
           _log.info('migration version<5: $from');
-          m.createIndex(idxFeedUrl);
-          m.drop(article);
-          m.createTable(article);
-          m.createIndex(idxArticleId);
-          final feedFavMigrate = await select(feedFav).get();
-          m.drop(feedFav);
-          m.createTable(feedFav);
-          m.createIndex(idxFeedFavId);
-          feedFavMigrate.forEach((fav) {
-            into(feedFav).insert(fav);
-          });
-        }*/
+          m.createTable(tweetUser);
+          m.createTable(tweet);
+          // final feedFavMigrate = await select(feedFav).get();
+          // feedFavMigrate.forEach((fav) {
+          //   into(feedFav).insert(fav);
+          // });
+        }
       });
 }
 
