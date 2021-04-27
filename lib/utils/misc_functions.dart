@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 String padDateNumber(int val) => val.toString().padLeft(2, '0');
 String dateTimeFormat(DateTime dt) => '${dt.year}-${padDateNumber(dt.month)}-${padDateNumber(dt.day)} ${padDateNumber(dt.hour)}:${padDateNumber(dt.minute)}';
@@ -19,6 +20,16 @@ String timeSinceNow(int millisecondsSinceEpoch) {
   return '${totalTime / 12} år';
 }
 
+String smartDateTime(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff > Duration(days: 100)) return '${dt.year}-${dt.month}-${dt.day}';
+  if (diff > Duration(days: 20)) return '${dt.month}-${dt.day} ${dt.hour}:${dt.minute.toString().padLeft(2, "0")}';
+  if (diff > Duration(hours: 20))
+    return '${dt.day} ${dt.hour.toString().padLeft(2, "0")}:${dt.minute.toString().padLeft(2, "0")}:${dt.second.toString().padLeft(2, "0")}';
+  else
+    return '${dt.hour}:${dt.minute}:${dt.second}';
+}
+
 String fetchHostUrl(String fullLink) {
   String url;
   final link = fullLink + '/';
@@ -36,5 +47,14 @@ String fetchHostUrl(String fullLink) {
   } catch (err) {
     debugPrint('fetchHostUrl error: $fullLink, error: $err');
     throw err;
+  }
+}
+
+void launchURL(String url) async {
+  final completeUrl = url.startsWith('http') ? url : 'http://$url';
+  if (await canLaunch(completeUrl)) {
+    await launch(completeUrl);
+  } else {
+    throw 'Could not launch $url';
   }
 }

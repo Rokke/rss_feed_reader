@@ -4,19 +4,11 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/models/tweet_encoding.dart';
 import 'package:rss_feed_reader/providers/tweet_list.dart';
+import 'package:rss_feed_reader/utils/misc_functions.dart';
 
 class TwitterWidget extends ConsumerWidget {
   TwitterWidget({Key? key}) : super(key: key);
   static double TWITTER_LIST_WIDTH = 400;
-  static String smartDateTime(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff > Duration(days: 100)) return '${dt.year}-${dt.month}-${dt.day}';
-    if (diff > Duration(days: 20)) return '${dt.month}-${dt.day} ${dt.hour}:${dt.minute.toString().padLeft(2, "0")}';
-    if (diff > Duration(hours: 20))
-      return '${dt.day} ${dt.hour.toString().padLeft(2, "0")}:${dt.minute.toString().padLeft(2, "0")}:${dt.second.toString().padLeft(2, "0")}';
-    else
-      return '${dt.hour}:${dt.minute}:${dt.second}';
-  }
 
   static Widget tweetContainer(BuildContext context, TweetEncode tweet, TweetUserEncode user) => Container(
         child: Stack(
@@ -51,7 +43,7 @@ class TwitterWidget extends ConsumerWidget {
                           margin: EdgeInsets.only(left: 2),
                           child: Linkify(
                             text: '${tweet.text}',
-                            onOpen: (link) => print('${link.text}'),
+                            onOpen: (link) => launchURL(link.text),
                             style: Theme.of(context).textTheme.caption,
                           ),
                         ),

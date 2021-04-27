@@ -5,18 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/screens/widgets/article_widget.dart';
 import 'package:rss_feed_reader/utils/misc_functions.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class DetailWidget extends ConsumerWidget {
   const DetailWidget({Key? key}) : super(key: key);
-
-  _launchURL(url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
-  }
 
   @override
   Widget build(BuildContext context, ScopedReader watch) {
@@ -49,10 +40,11 @@ class DetailWidget extends ConsumerWidget {
                             Container(
                               child: Row(
                                 children: [
-                                  IconButton(
-                                    icon: Icon(Icons.open_in_browser),
-                                    onPressed: () => _launchURL(selectedArticleData.state!.articleData!.url),
-                                  ),
+                                  if (selectedArticleData.state!.articleData!.url != null)
+                                    IconButton(
+                                      icon: Icon(Icons.open_in_browser),
+                                      onPressed: () => launchURL(selectedArticleData.state!.articleData!.url!),
+                                    ),
                                   IconButton(
                                       icon: Icon(
                                         Icons.favorite,

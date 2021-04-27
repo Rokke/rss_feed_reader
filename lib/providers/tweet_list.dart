@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:moor/moor.dart';
 import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/tweet_encoding.dart';
@@ -12,6 +13,7 @@ final providerTweetHeader = Provider<TweetListHeader>((ref) {
 const int TWITTER_CHECKINTERVAL = 600000;
 
 class TweetListHeader {
+  static final _log = Logger('TweetListHeader');
   final _listTweetKey = GlobalKey<AnimatedListState>(), _listTweetUserKey = GlobalKey<AnimatedListState>();
   final AppDb db;
   final List<int> readIds = [];
@@ -83,7 +85,7 @@ class TweetListHeader {
       } else
         debugPrint('No need to update twitter: $tweetUser');
     } else
-      debugPrint('illegal tweet: $tweetUser');
+      _log.warning('illegal tweet: $tweetUser');
     return false;
   }
 
@@ -99,15 +101,15 @@ class TweetListHeader {
     for (int i = 0; i < newTweetsReceived.length; i++) {
       if (!readIds.contains(newTweetsReceived[i].id) && !newTweetsReceived[i].isReply) {
         if (!tweets.any((element) => newTweetsReceived[i].id == element.id)) {
-          debugPrint('addNewTweet(${newTweetsReceived[i]})-new');
+          _log.info('addNewTweet(${newTweetsReceived[i]})-new');
           // tweets.insert(0, newTweetsReceived[i]);
           tweets.add(newTweetsReceived[i]);
           _listTweetKey.currentState!.insertItem(tweets.length - 1, duration: Duration(milliseconds: 500));
           await Future.delayed(Duration(milliseconds: 200));
         } else
-          debugPrint('addNewTweet(${newTweetsReceived[i]})-in list');
+          _log.fine('addNewTweet(${newTweetsReceived[i]})-in list');
       } else
-        debugPrint('addNewTweet(${newTweetsReceived[i]})-ignored');
+        _log.fine('addNewTweet(${newTweetsReceived[i]})-ignored');
     }
   }
 
@@ -121,7 +123,7 @@ class TweetListHeader {
       _listTweetKey.currentState!.removeItem(index, (context, animation) => SizeTransition(sizeFactor: animation, child: TwitterWidget.tweetContainer(context, cachedItem, twitterUser)), duration: Duration(milliseconds: 500));
       tweets.removeAt(index);
     } else
-      debugPrint('Invalid id: $twitterId');
+      _log.warning('removeTweet($twitterId)-Invalid id');
   }
 
   TweetUserEncode fetchUserInfo(int tweetUserId) => tweetUsers.firstWhere((element) => element.tweetUserId == tweetUserId);

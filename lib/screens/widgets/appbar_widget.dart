@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -111,10 +112,11 @@ class CustomAppBarWidget extends ConsumerWidget {
           ),
         ),
         MonitorButton(),
-        IconButton(
-          icon: Icon(Icons.hot_tub),
-          onPressed: () => _test(context),
-        )
+        if (kDebugMode)
+          IconButton(
+            icon: Icon(Icons.hot_tub),
+            onPressed: () => _test(context),
+          )
       ],
     );
   }

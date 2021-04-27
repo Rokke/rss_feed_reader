@@ -68,7 +68,7 @@ class HomeScreen extends ConsumerWidget {
                         child: Stack(
                       children: [
                         DetailWidget(),
-                        Positioned(right: 0, bottom: 15, child: Container(constraints: BoxConstraints.tightFor(width: TwitterWidget.TWITTER_LIST_WIDTH, height: 500), child: TwitterWidget())),
+                        Positioned(right: 0, bottom: 15, child: Container(constraints: BoxConstraints.tightFor(width: TwitterWidget.TWITTER_LIST_WIDTH, height: constraints.maxHeight - constraints.maxHeight / 3 - 60), child: TwitterWidget())),
                       ],
                     ))
                   ],

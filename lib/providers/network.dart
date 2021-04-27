@@ -9,7 +9,6 @@ import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/tweet_encoding.dart';
 import 'package:rss_feed_reader/models/xml_mapper/channel_mapper.dart';
 import 'package:rss_feed_reader/models/xml_mapper/item_mapper.dart';
-import 'package:rss_feed_reader/screens/widgets/twitter_widget.dart';
 import 'package:rss_feed_reader/secret.dart';
 import 'package:rss_feed_reader/utils/misc_functions.dart';
 import 'package:xml/xml.dart';
@@ -63,16 +62,16 @@ class RSSNetwork {
   ///TODO - Slett gamle feeds som ikke blir sendt lengre. Skal jeg her sjekke +10 tweets når jeg starter opp APP eller lenge siden sjekk og slette da de som ikke kommer?
   static Future<List<TweetEncode>> fetchUserTweets(AppDb db, TweetUserEncode tweetUserData) async {
     assert(tweetUserData.id != null, 'Invalid tweetUser: $tweetUserData');
-    debugPrint('fetchUserTweets($tweetUserData)');
+    _log.info('fetchUserTweets($tweetUserData)');
     final response = await http.Dio().get('https://api.twitter.com/2/users/${tweetUserData.tweetUserId}/tweets?tweet.fields=created_at,referenced_tweets', options: http.Options(headers: {'Authorization': 'Bearer $TWITTER_BEARER_TOKEN'}));
     if (response.statusCode == 200 && response.data['data'] is List) {
       try {
         return (response.data['data'] as List).map((tweet) => TweetEncode.fromJSON(tweetUserData.tweetUserId, tweet)).toList();
       } catch (err) {
-        debugPrint('Error decode: ${response.data}, $err');
+        _log.warning('fetchUserTweets()-Error decode: ${response.data}, $err');
       }
     } else
-      debugPrint('Err response: $json');
+      _log.warning('fetchUserTweets()-Err response: $json');
     return [];
   }
   // static Future<bool> updateTweets(AppDb db, TweetUserData tweetUserData) async {
@@ -94,22 +93,22 @@ class RSSNetwork {
   // }
 
   static Future<TweetUserEncode?> fetchTweetUsername({int? id, String? username}) async {
-    debugPrint('addTweetUsername($id, $username)');
+    _log.fine('addTweetUsername($id, $username)');
     assert(id != null || username != null, 'addTweetUsername-id or username must be valid');
     final url = 'https://api.twitter.com/2/users/${id != null ? id : "by/username/$username"}?user.fields=profile_image_url';
-    debugPrint('url: $url');
+    _log.finest('url: $url');
     final response = await http.Dio().get(url, options: http.Options(headers: {'Authorization': 'Bearer $TWITTER_BEARER_TOKEN'}));
     if (response.statusCode == 200 && response.data['data'] != null) {
       try {
-        debugPrint('Adding user: ${response.data['data']}');
+        _log.info('fetchTweetUsername()-Adding user: ${response.data['data']}');
         return TweetUserEncode.fromJSON(response.data['data']);
         // await db.insertTweetUser(int.parse(response.data['data']['id']), response.data['data']['username'], response.data['data']['name'], profileUrl: response.data['data']['profile_image_url']);
         // return (response.data['data'] as List).map((tweet) => Tweet.fromJSON(tweet)).toList();
       } catch (err) {
-        debugPrint('Error decode: ${response.data}, $err');
+        _log.warning('fetchTweetUsername()-Error decode: ${response.data}, $err');
       }
     } else
-      debugPrint('Err response: ${response.data}');
+      _log.warning('fetchTweetUsername()-Err response: ${response.data}');
     return null;
   }
 

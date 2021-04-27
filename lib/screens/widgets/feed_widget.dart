@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/rss_tree.dart';
-import 'package:rss_feed_reader/providers/network.dart';
 import 'package:rss_feed_reader/providers/tweet_list.dart';
 import 'package:rss_feed_reader/screens/widgets/lists/feed_list_item.dart';
 import 'package:rss_feed_reader/screens/widgets/popups/add_feed.dart';
@@ -53,13 +52,13 @@ class FeedView extends ConsumerWidget {
                                 final ret = await Navigator.of(context).push(HeroDialogRoute(builder: (context) {
                                   return AddFeedPopup();
                                 }));
-                                if (ret is String && ret.length > 10)
-                                  RSSNetwork.updateFeed(context.read(rssDatabase), FeedData(title: '', url: ret));
+                                if (ret is String && ret.length > 1)
+                                  Navigator.of(context).pop();
                                 else
-                                  debugPrint('Ugyldig URL: $ret');
+                                  debugPrint('Ugyldig valg');
                               },
                               icon: Icon(Icons.add_circle),
-                              label: Text('Ny RSS')),
+                              label: Text('Ny RSS/Twitter')),
                         ),
                       )),
                     ),
