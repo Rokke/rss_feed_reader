@@ -3,7 +3,7 @@ description: A RSS Reader built by Flutter
 
 publish_to: "none"
 
-version: 1.0.1+2
+version: 1.1.0+3
 
 environment:
   sdk: ">=2.12.0-259.16.beta <3.0.0"
@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cached_network_image: ^3.0.0
+  collection: ^1.15.0
   crypto: ^3.0.1
   desktop_window: ^0.4.0
   dio: ^4.0.0-beta2
@@ -21,17 +22,16 @@ dependencies:
   html_unescape: ^2.0.0
   logging: ^1.0.1
   moor: ^4.1.0
-  package_info_plus: ^1.0.0
+  package_info_plus: ^1.0.1
   path: ^1.8.0
   path_provider: ^2.0.0
-  shared_preferences: ^2.0.1
   sqlite3_flutter_libs: ^0.4.0+1
   url_launcher: ^6.0.2
   xml: ^5.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: ^1.11.5
+  build_runner: ^2.0.1
   flutter_launcher_icons: ^0.9.0
   moor_generator: ^4.1.0
 flutter:

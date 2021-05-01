@@ -28,7 +28,7 @@ class RSSHead extends StateNotifier<RSSTree> {
       if (!busy) {
         busy = true;
         try {
-          if (!await findFeedToUpdate()) read(providerTweetHeader).checkAndUpdateTweet();
+          if (!await findFeedToUpdate()) await read(providerTweetHeader).checkAndUpdateTweet(isAuto: true);
         } catch (err) {
           _log.severe('Monitor error', err);
         } finally {

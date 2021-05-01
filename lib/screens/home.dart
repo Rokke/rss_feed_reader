@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:rss_feed_reader/models/rss_tree.dart';
 import 'package:rss_feed_reader/screens/widgets/appbar_widget.dart';
@@ -17,33 +16,34 @@ final applicationVersionProvider = FutureProvider<PackageInfo>((ref) {
   return pi;
 });
 
-class AppInfo {
-  PackageInfo? _pInfo;
-  final _log = Logger('AppInfoNotifier');
-  AppInfoNotifier(RSSHead rss) {
-    _init(rss);
-  }
+// class AppInfo {
+//   PackageInfo? _pInfo;
+//   final _log = Logger('AppInfoNotifier');
+//   AppInfoNotifier(RSSHead rss) {
+//     _init(rss);
+//   }
 
-  _init(RSSHead rss) async {
-    _pInfo = await PackageInfo.fromPlatform();
-    _log.info('App starting $this');
-    if (kReleaseMode) rss.startMonitoring(postponeStart: Duration(seconds: 20));
-  }
+//   _init(RSSHead rss) async {
+//     _pInfo = await PackageInfo.fromPlatform();
+//     _log.info('App starting $this');
+//     if (kReleaseMode) rss.startMonitoring(postponeStart: Duration(seconds: 20));
+//   }
 
-  bool get initialized => _pInfo != null;
-  String? get appName => _pInfo?.appName;
-  String? get packageName => _pInfo?.packageName;
-  String? get buildNumber => _pInfo?.buildNumber;
-  String? get version => _pInfo?.version;
-  @override
-  String toString() {
-    return '$appName - $version.$buildNumber. $packageName';
-  }
-}
+//   bool get initialized => _pInfo != null;
+//   String? get appName => _pInfo?.appName;
+//   String? get packageName => _pInfo?.packageName;
+//   String? get buildNumber => _pInfo?.buildNumber;
+//   String? get version => _pInfo?.version;
+//   @override
+//   String toString() {
+//     return '$appName - $version.$buildNumber. $packageName';
+//   }
+// }
 
 class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ScopedReader watch) {
+    PackageInfo.fromPlatform().then((appVersion) => debugPrint('Fuiture: ${appVersion.appName}-${appVersion.buildNumber}-${appVersion.packageName}-${appVersion.version}'));
     final appVersionFuture = watch(applicationVersionProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(

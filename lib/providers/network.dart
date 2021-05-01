@@ -19,6 +19,7 @@ final networkProvider = Provider<RSSNetwork>((ref) {
 
 class RSSNetwork {
   static final _log = Logger('RSSNetwork');
+  static const TWITTER_QUERY_PARAMS = 'user.fields=id,username,name,profile_image_url&expansions=referenced_tweets.id.author_id&tweet.fields=created_at';
   final AppDb db;
 
   RSSNetwork(this.db);
@@ -59,20 +60,42 @@ class RSSNetwork {
     return numberOfArticlesAdded;
   }
 
+  // static Future<TweetFullDecode?> fetchTweet(int tweetId) async {
+  //   _log.info('fetchTweet($tweetId)');
+  //   final response = await http.Dio().get('https://api.twitter.com/2/tweets/$tweetId?$TWITTER_QUERY_PARAMS', options: http.Options(headers: {'Authorization': 'Bearer $TWITTER_BEARER_TOKEN'}));
+  //   if (response.statusCode == 200 && response.data['data'] is Map) {
+  //     return TweetFullDecode(response.data, null);
+  //     // try {
+  //     //   if (response.data['includes']['users'] is List) {
+  //     //     final newTweetUser = TweetUserEncode.fromJSON((response.data['includes']['users'] as List).first);
+  //     //     return TweetEncode.fromJSON(newTweetUser, response.data['data']);
+  //     //     // return ().map((tweet) => TweetEncode.fromJSON(tweetUserData.tweetUserId, tweet)).toList().first;
+  //     //   } else
+  //     //     _log.warning('fetchTweet()-No userdata received: ${response.data}');
+  //     // } catch (err) {
+  //     //   _log.warning('fetchTweet()-Error decode: ${response.data}, $err');
+  //     // }
+  //   } else
+  //     _log.warning('fetchTweet()-Err response: $json');
+  //   return null;
+  // }
+
   ///TODO - Slett gamle feeds som ikke blir sendt lengre. Skal jeg her sjekke +10 tweets når jeg starter opp APP eller lenge siden sjekk og slette da de som ikke kommer?
-  static Future<List<TweetEncode>> fetchUserTweets(AppDb db, TweetUserEncode tweetUserData) async {
+  static Future<TweetFullDecode?> fetchUserTweets(TweetUserEncode tweetUserData) async {
     assert(tweetUserData.id != null, 'Invalid tweetUser: $tweetUserData');
-    _log.info('fetchUserTweets($tweetUserData)');
-    final response = await http.Dio().get('https://api.twitter.com/2/users/${tweetUserData.tweetUserId}/tweets?tweet.fields=created_at,referenced_tweets', options: http.Options(headers: {'Authorization': 'Bearer $TWITTER_BEARER_TOKEN'}));
+    final url = 'https://api.twitter.com/2/users/${tweetUserData.tweetUserId}/tweets?$TWITTER_QUERY_PARAMS';
+    _log.info('fetchUserTweets($tweetUserData):$url');
+    final response = await http.Dio().get(url, options: http.Options(headers: {'Authorization': 'Bearer $TWITTER_BEARER_TOKEN'}));
     if (response.statusCode == 200 && response.data['data'] is List) {
-      try {
-        return (response.data['data'] as List).map((tweet) => TweetEncode.fromJSON(tweetUserData.tweetUserId, tweet)).toList();
-      } catch (err) {
-        _log.warning('fetchUserTweets()-Error decode: ${response.data}, $err');
-      }
+      return TweetFullDecode(response.data, tweetUserData);
+      // try {
+      //   return (response.data['data'] as List).map((tweet) => TweetEncode.fromJSON(tweetUserData, tweet)).toList();
+      // } catch (err) {
+      //   _log.warning('fetchUserTweets()-Error decode: ${response.data}, $err');
+      // }
     } else
       _log.warning('fetchUserTweets()-Err response: $json');
-    return [];
+    return null;
   }
   // static Future<bool> updateTweets(AppDb db, TweetUserData tweetUserData) async {
   //   assert(tweetUserData.id != null, 'Invalid tweetUser: $tweetUserData');

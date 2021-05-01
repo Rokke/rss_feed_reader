@@ -15,8 +15,9 @@ class CustomAppBarWidget extends ConsumerWidget {
   _test(BuildContext context) async {
     debugPrint('_test()');
     try {
-      final tweetHead = context.read(providerTweetHeader);
-      debugPrint('checkAndUpdateTweet: ${await tweetHead.checkAndUpdateTweet()}');
+      // final ret = await Process.runSync('pwsh', ['-c', 'Invoke-Command', '-ScriptBlock', '{[System.Console]::Beep(2000,200); [System.Console]::Beep(3000,100)}']);
+      // debugPrint('Run: ${ret.stdout}, ${ret.stderr}, ${ret.exitCode}'); //r'$player = New-Object -TypeName System.Media.SoundPlayer;$player.SoundLocation = "D:\\Downloads\\tweet.wav";$player.Load();$player.Play()'])).exitCode}');
+      debugPrint('checkAndUpdateTweet: ${await context.read(providerTweetHeader).checkAndUpdateTweet()}');
     } catch (err) {
       debugPrint('Error: $err');
     }
@@ -26,6 +27,7 @@ class CustomAppBarWidget extends ConsumerWidget {
   Widget build(BuildContext context, ScopedReader watch) {
     final selectedFilter = watch(filterShowArticleStatus).state;
     final articleCountFuture = watch(selectedFeedStatusArticlesCount);
+    debugPrint('test: ${appVersion.appName}-${appVersion.buildNumber}-${appVersion.packageName}-${appVersion.version}');
     // final txtSearchFilter = TextEditingController(text: watch(filterShowTitleText).state);
     return AppBar(
       title: Text('RSS Oversikt - ${appVersion.version}${(appVersion.buildNumber.isNotEmpty) ? ".${appVersion.buildNumber}" : ""}'),

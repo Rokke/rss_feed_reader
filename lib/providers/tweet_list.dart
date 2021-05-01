@@ -1,7 +1,11 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:moor/moor.dart';
+import 'package:collection/collection.dart';
 import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/tweet_encoding.dart';
 import 'package:rss_feed_reader/providers/network.dart';
@@ -67,26 +71,30 @@ class TweetListHeader {
     return tweetUsers.length - 1;
   }
 
-  Future<bool> checkAndUpdateTweet() async {
+  Future<bool> checkAndUpdateTweet({bool isAuto = false}) async {
     final tweetUser = tweetUsers.fold(
         null,
         (TweetUserEncode? previousValue, element) => previousValue == null
             ? element
-            : element.lastCheck < previousValue.lastCheck
+            : element.id != null && element.lastCheck < previousValue.lastCheck
                 ? element
                 : previousValue);
     if (tweetUser?.id != null) {
       if (tweetUser!.lastCheck + TWITTER_CHECKINTERVAL < DateTime.now().millisecondsSinceEpoch) {
-        final allTweetsFromUser = await RSSNetwork.fetchUserTweets(db, tweetUser);
-        // read(unreadArticles).state.changeValue(addedFeeds);
-        updateTweetsFromUser(allTweetsFromUser);
-        tweetUser.lastCheck = DateTime.now().millisecondsSinceEpoch;
+        await refreshTweetsFromUser(tweetUser, isAuto: isAuto);
         return true;
       } else
-        debugPrint('No need to update twitter: $tweetUser');
+        _log.fine('No need to update twitter: $tweetUser');
     } else
-      _log.warning('illegal tweet: $tweetUser');
+      _log.warning('checkAndUpdateTweet()-illegal tweet: $tweetUser');
     return false;
+  }
+
+  Future<void> refreshTweetsFromUser(TweetUserEncode tweetUser, {bool isAuto = false}) async {
+    final allTweetsFromUser = await RSSNetwork.fetchUserTweets(tweetUser);
+    // read(unreadArticles).state.changeValue(addedFeeds);
+    if (allTweetsFromUser != null) await updateTweetsFromUser(allTweetsFromUser);
+    tweetUser.lastCheck = DateTime.now().millisecondsSinceEpoch + (!isAuto || !tweetUser.isFirstTime ? 0 : (TWITTER_CHECKINTERVAL / 2 - Random().nextInt(TWITTER_CHECKINTERVAL)).toInt()); // Sprer tweetsjekkene utover
   }
 
   void addNewUser(TweetUserEncode newUser) async {
@@ -97,36 +105,61 @@ class TweetListHeader {
       debugPrint('addNewUser($newUser)-exist');
   }
 
-  void updateTweetsFromUser(List<TweetEncode> newTweetsReceived) async {
-    for (int i = 0; i < newTweetsReceived.length; i++) {
-      if (!readIds.contains(newTweetsReceived[i].id) && !newTweetsReceived[i].isReply) {
-        if (!tweets.any((element) => newTweetsReceived[i].id == element.id)) {
-          _log.info('addNewTweet(${newTweetsReceived[i]})-new');
+  // Future<void> readTweet(int tweetId, int index) async {
+  //   final newTweet = await RSSNetwork.fetchTweet(tweetId);
+  //   if (newTweet?.parentUser != null) {
+  //     final foundUserInList = fetchUserInfo(newTweet!.parentUser.tweetUserId);
+  //     if (foundUserInList != null) newTweet.parentUser = foundUserInList;
+  //     _insertNewTweet(newTweet, index: index);
+  //   }
+  // }
+
+  Future<void> updateTweetsFromUser(TweetFullDecode tweetFullDecode) async {
+    int newItems = 0;
+    for (int i = 0; i < tweetFullDecode.tweets.length; i++) {
+      if (!readIds.contains(tweetFullDecode.tweets[i].id)) {
+        if (!tweets.any((element) => tweetFullDecode.tweets[i].id == element.id)) {
+          try {
+            if (newItems++ == 0 && Platform.isWindows) Process.runSync('pwsh', ['-c', 'Invoke-Command', '-ScriptBlock', '{[System.Console]::Beep(2000,100); [System.Console]::Beep(3000,100)}']);
+          } catch (err) {
+            _log.warning('updateTweetsFromUser()-error playing sound: $err');
+          }
+          _log.info('updateTweetsFromUser(${tweetFullDecode.tweets[i]})-new');
           // tweets.insert(0, newTweetsReceived[i]);
-          tweets.add(newTweetsReceived[i]);
-          _listTweetKey.currentState!.insertItem(tweets.length - 1, duration: Duration(milliseconds: 500));
+          _insertNewTweet(tweetFullDecode.tweets[i]);
+          // _listTweetKey.currentState!.insertItem(tweets.length - 1, duration: Duration(milliseconds: 500));
           await Future.delayed(Duration(milliseconds: 200));
         } else
-          _log.fine('addNewTweet(${newTweetsReceived[i]})-in list');
+          _log.fine('updateTweetsFromUser(${tweetFullDecode.tweets[i]})-in list');
       } else
-        _log.fine('addNewTweet(${newTweetsReceived[i]})-ignored');
+        _log.fine('updateTweetsFromUser(${tweetFullDecode.tweets[i]})-ignored');
     }
+  }
+
+  _insertNewTweet(TweetEncode newTweet, {int index = -1}) {
+    if (index < 0)
+      tweets.add(newTweet);
+    else
+      tweets.insert(index, newTweet);
+    _listTweetKey.currentState!.insertItem((index < 0 ? tweets.length - 1 : index), duration: Duration(milliseconds: 500));
   }
 
   void removeTweet(int twitterId) async {
     final index = tweets.indexWhere((element) => element.id == twitterId);
     if (index >= 0) {
-      db.insertTweet(TweetCompanion.insert(tweetId: Value(twitterId), parent: tweets[index].tweetUserId));
-      readIds.add(twitterId);
-      final twitterUser = fetchUserInfo(tweets[index].tweetUserId);
+      if (tweets[index].parentUser.id != null) {
+        db.insertTweet(TweetCompanion.insert(tweetId: Value(twitterId), parent: tweets[index].parentUser.tweetUserId));
+        readIds.add(twitterId);
+      }
+      // final twitterUser = fetchUserInfo(tweets[index].tweetUserId);
       final cachedItem = tweets[index];
-      _listTweetKey.currentState!.removeItem(index, (context, animation) => SizeTransition(sizeFactor: animation, child: TwitterWidget.tweetContainer(context, cachedItem, twitterUser)), duration: Duration(milliseconds: 500));
+      _listTweetKey.currentState!.removeItem(index, (context, animation) => SizeTransition(sizeFactor: animation, child: TwitterWidget.tweetContainer(context, cachedItem)), duration: Duration(milliseconds: 500));
       tweets.removeAt(index);
     } else
       _log.warning('removeTweet($twitterId)-Invalid id');
   }
 
-  TweetUserEncode fetchUserInfo(int tweetUserId) => tweetUsers.firstWhere((element) => element.tweetUserId == tweetUserId);
+  TweetUserEncode? fetchUserInfo(int tweetUserId) => tweetUsers.firstWhereOrNull((element) => element.tweetUserId == tweetUserId);
 
   GlobalKey<AnimatedListState> get tweetKey => _listTweetKey;
   GlobalKey<AnimatedListState> get tweetUserKey => _listTweetUserKey;

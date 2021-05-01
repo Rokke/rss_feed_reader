@@ -6,7 +6,7 @@ import 'package:rss_feed_reader/providers/tweet_list.dart';
 
 class TwitterUserWidget extends ConsumerWidget {
   TwitterUserWidget({Key? key}) : super(key: key);
-  static Widget tweetUserContainer(BuildContext context, TweetUserEncode tweetUser) => Container(
+  static Widget tweetUserContainer(BuildContext context, TweetUserEncode tweetUser, {Function()? onRefresh}) => Container(
       margin: EdgeInsets.symmetric(vertical: 1),
       padding: EdgeInsets.only(left: 2),
       decoration: BoxDecoration(
@@ -19,6 +19,7 @@ class TwitterUserWidget extends ConsumerWidget {
         children: [
           Container(color: Color(0x8F5E35B1), child: Center(child: Text('${tweetUser.name}(${tweetUser.username})', style: Theme.of(context).textTheme.subtitle2))),
           Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            if (onRefresh != null) IconButton(onPressed: onRefresh, icon: Icon(Icons.refresh)),
             Flexible(
                 child: Text(
               '${tweetUser.name}',
@@ -46,7 +47,7 @@ class TwitterUserWidget extends ConsumerWidget {
     return AnimatedList(
       initialItemCount: tweetHead.tweetUsers.length,
       itemBuilder: (BuildContext context, int index, animation) {
-        return SizeTransition(sizeFactor: animation, child: tweetUserContainer(context, tweetHead.tweetUsers[index]));
+        return SizeTransition(sizeFactor: animation, child: tweetUserContainer(context, tweetHead.tweetUsers[index], onRefresh: () => tweetHead.refreshTweetsFromUser(tweetHead.tweetUsers[index])));
       },
       key: tweetHead.tweetUserKey,
     );

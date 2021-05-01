@@ -25,10 +25,12 @@ String smartDateTime(DateTime dt) {
   if (diff > Duration(days: 100)) return '${dt.year}-${dt.month}-${dt.day}';
   if (diff > Duration(days: 20)) return '${dt.month}-${dt.day} ${dt.hour}:${dt.minute.toString().padLeft(2, "0")}';
   if (diff > Duration(hours: 20))
-    return '${dt.day} ${dt.hour.toString().padLeft(2, "0")}:${dt.minute.toString().padLeft(2, "0")}:${dt.second.toString().padLeft(2, "0")}';
+    return '${dt.day} ${timeFormat(dt, ignoreSeconds: true)}';
   else
-    return '${dt.hour}:${dt.minute}:${dt.second}';
+    return timeFormat(dt);
 }
+
+String timeFormat(DateTime dt, {bool ignoreSeconds = false}) => '${dt.hour.toString().padLeft(2, "0")}:${dt.minute.toString().padLeft(2, "0")}${ignoreSeconds ? '' : dt.second.toString().padLeft(2, "0")}';
 
 String fetchHostUrl(String fullLink) {
   String url;
