@@ -27,6 +27,7 @@ class TwitterUserWidget extends ConsumerWidget {
               // linkStyle: Theme.of(context).textTheme.caption!.copyWith(color: Colors.red),
               // style: Theme.of(context).textTheme.caption!.copyWith(color: Colors.black),
             )),
+            Text('${tweetUser.sinceId}'),
             ClipOval(
               child: Container(
                 height: 40,

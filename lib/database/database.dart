@@ -10,6 +10,7 @@ import 'package:moor/ffi.dart';
 import 'package:moor/moor.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:rss_feed_reader/models/tweet_encoding.dart';
 import 'package:rss_feed_reader/models/xml_mapper/channel_mapper.dart';
 import 'package:rss_feed_reader/providers/network.dart';
 
@@ -30,7 +31,7 @@ class AppDb extends _$AppDb {
   AppDb() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
   Future<int> updateActiveStatus(int feedId, List<int> activeIds) async {
     return (update(article)..where((tbl) => tbl.active.equals(true) & tbl.parent.equals(feedId) & tbl.id.isNotIn(activeIds))).write(ArticleCompanion(active: Value(false)));
   }
@@ -79,6 +80,25 @@ class AppDb extends _$AppDb {
   Stream<CategoryData?> fetchCategoryByName({required String categoryName}) => (select(category)..where((tbl) => tbl.name.equals(categoryName))).watchSingleOrNull();
   // numberOfUnreadArticles() => article.id.count(filter: article.status.equals(0) | article.status.equals(null));
   Stream<List<TweetUserData>> tweetUsers() => (select(tweetUser)..orderBy([(tbl) => OrderingTerm.asc(tbl.username)])).watch();
+  Future<List<TweetData>> tweets({int status = TweetTableStatus.UNREAD}) => (select(tweet)
+        ..where((tbl) => tbl.status.equals(status))
+        ..orderBy([(tbl) => OrderingTerm.desc(tbl.tweetId)]))
+      .get();
+  Future<bool> insertTweet(TweetEncode tweetEncode) async {
+    int? retweetId;
+    if (tweetEncode.retweet != null) {
+      retweetId = await into(retweet).insert(RetweetCompanion.insert(
+          tweetUserId: tweetEncode.retweet!.parentUser.tweetUserId,
+          title: tweetEncode.retweet!.text,
+          createdAt: tweetEncode.retweet!.created_at.millisecondsSinceEpoch,
+          username: tweetEncode.retweet!.parentUser.username,
+          name: tweetEncode.retweet!.parentUser.name,
+          profileUrl: Value(tweetEncode.retweet!.parentUser.profile_image_url)));
+    }
+    into(tweet).insert(TweetCompanion.insert(parent: tweetEncode.parentUser.id!, title: tweetEncode.text, createdAt: tweetEncode.created_at.millisecondsSinceEpoch, tweetId: Value(tweetEncode.id), retweetId: Value(retweetId)));
+    return true;
+  }
+
   Future<int> insertTweetUser(TweetUserCompanion newUser) async {
     final newId = await into(tweetUser).insert(newUser);
     return newId;
@@ -101,10 +121,11 @@ class AppDb extends _$AppDb {
   //   return true;
   // }
 
-  Future<int> insertTweet(TweetCompanion tweetCompanion) async => into(tweet).insert(tweetCompanion);
+  // Future<int> insertTweet(TweetCompanion tweetCompanion) async => into(tweet).insert(tweetCompanion);
   // Future<int> updateTweetStatus({required int id, int status = ArticleTableStatus.READ}) => (update(tweet)..where((tbl) => tbl.id.equals(id))).write(TweetCompanion(status: Value(status)));
+  Future<int> updateTweetStatus(int id) => (update(tweet)..where((tbl) => tbl.tweetId.equals(id))).write(TweetCompanion(status: Value(TweetTableStatus.READ)));
   Future<TweetUserData?> fetchTweetUser(int id) => (select(tweetUser)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
-  Stream<List<TweetData>> tweets() => select(tweet).watch();
+  // Stream<List<TweetData>> tweets() => select(tweet).watch();
   extractJSON(String filename) async {
     _log.info('extractJSON($filename)');
     final res = await select(feed).join([innerJoin(feedFav, feedFav.feedId.equalsExp(feed.id))]).get();
@@ -145,6 +166,13 @@ class AppDb extends _$AppDb {
           _log.info('migration version<5: $from');
           m.createTable(tweetUser);
           m.createTable(tweet);
+        } else if (from < 6) {
+          _log.info('migration version<6: $from');
+          customUpdate('UPDATE tweet_user SET last_check=0');
+          m.renameColumn(tweetUser, 'last_check', tweetUser.sinceId);
+          await m.drop(tweet);
+          await m.createTable(tweet);
+          m.createTable(retweet);
           // final feedFavMigrate = await select(feedFav).get();
           // feedFavMigrate.forEach((fav) {
           //   into(feedFav).insert(fav);
@@ -168,4 +196,10 @@ abstract class ArticleTableStatus {
   static const READ = -1;
   static const UNREAD = 0;
   static const FAVORITE = 1;
+}
+
+abstract class TweetTableStatus {
+  static const READ = -1;
+  static const UNREAD = 0;
+  static const RETWEET = 1;
 }

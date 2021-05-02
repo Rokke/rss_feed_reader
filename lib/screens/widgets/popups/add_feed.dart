@@ -56,11 +56,12 @@ class AddFeedPopup extends ConsumerWidget {
                                             RSSNetwork.updateFeed(context.read(rssDatabase), FeedData(title: '', url: txtUrl.text));
                                           else {
                                             TweetUserEncode? foundUser;
+                                            final tweetHead = context.read(providerTweetHeader);
                                             if (txtTwitterUserId.text.length > 0 && int.tryParse(txtTwitterUserId.text) != null)
-                                              foundUser = await RSSNetwork.fetchTweetUsername(id: int.parse(txtTwitterUserId.text));
-                                            else if (txtTwitterUsername.text.length > 3) foundUser = await RSSNetwork.fetchTweetUsername(username: txtTwitterUsername.text);
+                                              foundUser = await tweetHead.fetchTweetUsername(id: int.parse(txtTwitterUserId.text));
+                                            else if (txtTwitterUsername.text.length > 3) foundUser = await tweetHead.fetchTweetUsername(username: txtTwitterUsername.text);
                                             if (foundUser != null) {
-                                              context.read(providerTweetHeader).addNewUser(foundUser);
+                                              tweetHead.addNewUser(foundUser);
                                             } else
                                               return;
                                           }

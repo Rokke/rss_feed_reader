@@ -75,14 +75,15 @@ class TwitterWidget extends ConsumerWidget {
                 ),
               ),
             ),
-            Positioned(
-                child: ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: tweet.parentUser.profile_image_url,
-                height: 35,
-                fit: BoxFit.scaleDown,
-              ),
-            )),
+            if (tweet.parentUser.profile_image_url.isNotEmpty)
+              Positioned(
+                  child: ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: tweet.parentUser.profile_image_url,
+                  height: 35,
+                  fit: BoxFit.scaleDown,
+                ),
+              )),
           ],
         ),
       );
