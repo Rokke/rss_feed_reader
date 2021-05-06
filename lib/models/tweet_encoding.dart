@@ -49,7 +49,7 @@ class TweetEncode {
       throw err;
     }
   }
-  TweetData toTweetData() => TweetData(tweetId: id, parent: parentUser.id!, title: text, createdAt: created_at.millisecondsSinceEpoch);
+  TweetData toTweetDataIsItInUse() => TweetData(tweetId: id, parent: parentUser.id!, title: text, createdAt: created_at.millisecondsSinceEpoch);
   // bool get isReply => referenced_tweets.any((element) => element.type == 'replied_to');
   bool get isRetweet => retweet != null;
   // int get firstRetweetId => referenced_tweets.indexWhere((element) => element.type == 'retweeted');
@@ -124,4 +124,10 @@ class TweetFullDecode {
     else
       tweets = [TweetEncode.fromJSON(parentUser, json['data'], includeTweets)];
   }
+}
+
+abstract class TweetTableStatus {
+  static const READ = -1;
+  static const UNREAD = 0;
+  static const RETWEET = 1;
 }

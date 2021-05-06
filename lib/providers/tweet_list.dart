@@ -117,8 +117,8 @@ class TweetListHeader {
   }
 
   Future<TweetUserEncode?> fetchTweetUsername({int? id, String? username}) async {
-    _log.fine('addTweetUsername($id, $username)');
-    assert(id != null || username != null, 'addTweetUsername-id or username must be valid');
+    _log.fine('fetchTweetUsername($id, $username)');
+    assert(id != null || username != null, 'fetchTweetUsername-id or username must be valid');
     final url = 'https://api.twitter.com/2/users/${id != null ? id : "by/username/$username"}?user.fields=profile_image_url';
     final response = await RSSNetwork.getResponse(url, headers: {'Authorization': 'Bearer $TWITTER_BEARER_TOKEN'});
     if (response != null && response['data'] != null) {
@@ -126,10 +126,10 @@ class TweetListHeader {
         _log.info('fetchTweetUsername()-Adding user: ${response['data']}');
         return TweetUserEncode.fromJSON(response['data']);
       } catch (err) {
-        _log.warning('fetchTweetUsername()-Error decode: ${response}, $err');
+        _log.warning('fetchTweetUsername($url)-Error decode: ${response}, $err');
       }
     } else
-      _log.warning('fetchTweetUsername()-Err response: ${response}');
+      _log.warning('fetchTweetUsername($url)-Err response: ${response}');
     return null;
   }
 
@@ -168,10 +168,9 @@ class TweetListHeader {
         }
         _log.info('updateTweetsFromUser(${tweetFullDecode.tweets[i]})-new');
         // tweets.insert(0, newTweetsReceived[i]);
-        db.insertTweet(tweetFullDecode.tweets[i]);
-        _insertNewTweetToList(tweetFullDecode.tweets[i]);
+        db.insertTweet(tweetFullDecode.tweets[i]).then((value) => _insertNewTweetToList(tweetFullDecode.tweets[i]));
         // _listTweetKey.currentState!.insertItem(tweets.length - 1, duration: Duration(milliseconds: 500));
-        await Future.delayed(Duration(milliseconds: 200));
+        // await Future.delayed(Duration(milliseconds: 200));
       } else
         _log.fine('updateTweetsFromUser(${tweetFullDecode.tweets[i]})-in list');
       // } else
@@ -179,7 +178,7 @@ class TweetListHeader {
     }
   }
 
-  _insertNewTweetToList(TweetEncode newTweet, {int index = -1}) {
+  void _insertNewTweetToList(TweetEncode newTweet, {int index = -1}) {
     if (index < 0)
       tweets.add(newTweet);
     else
@@ -191,6 +190,7 @@ class TweetListHeader {
     db.updateTweetStatus(twitterId);
     final index = tweets.indexWhere((element) => element.id == twitterId);
     if (index >= 0) {
+      _log.info('removeTweet($twitterId)-removed');
       final cachedItem = tweets[index];
       _listTweetKey.currentState!.removeItem(index, (context, animation) => SizeTransition(sizeFactor: animation, child: TwitterWidget.tweetContainer(context, cachedItem)), duration: Duration(milliseconds: 500));
       tweets.removeAt(index);

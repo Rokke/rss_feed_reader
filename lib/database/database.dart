@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -10,9 +9,8 @@ import 'package:moor/ffi.dart';
 import 'package:moor/moor.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:rss_feed_reader/models/feed_encode.dart';
 import 'package:rss_feed_reader/models/tweet_encoding.dart';
-import 'package:rss_feed_reader/models/xml_mapper/channel_mapper.dart';
-import 'package:rss_feed_reader/providers/network.dart';
 
 part 'database.g.dart';
 
@@ -31,48 +29,59 @@ class AppDb extends _$AppDb {
   AppDb() : super(_openConnection());
 
   @override
-  int get schemaVersion => 6;
-  Future<int> updateActiveStatus(int feedId, List<int> activeIds) async {
-    return (update(article)..where((tbl) => tbl.active.equals(true) & tbl.parent.equals(feedId) & tbl.id.isNotIn(activeIds))).write(ArticleCompanion(active: Value(false)));
+  int get schemaVersion => 7;
+  Future<int> removeActiveStatus(List<int> articleIds) async {
+    return (update(article)..where((tbl) => tbl.id.isIn(articleIds))).write(ArticleCompanion(active: Value(false)));
   }
 
-  Stream<FeedFavData?> fetchFavForFeed(int feedId) {
-    return (select(feedFav)..where((tbl) => tbl.feedId.equals(feedId))).watchSingleOrNull();
-  }
+  // Stream<FeedFavData?> fetchFavForFeed(int feedId) {
+  //   return (select(feedFav)..where((tbl) => tbl.feedId.equals(feedId))).watchSingleOrNull();
+  // }
 
   // updateFeedInfo(FeedCompanion feedCompanion, int feedId) {
   //   (update(feed)..where((tbl) => tbl.id.equals(feedId))).write(feedCompanion);
   // }
-  Future<int> insertFeed(String url, ChannelMapper channel, int? currentEpocMs, String? favImageUrl) async {
-    final newId = await into(feed).insert(channel.toFeedCompanion().copyWith(url: Value(url), lastCheck: Value(currentEpocMs)));
-    if (favImageUrl != null) await into(feedFav).insert(FeedFavCompanion.insert(feedId: newId, url: favImageUrl));
+  Future<int> insertNewFeed(FeedCompanion insertFeed) async {
+    _log.info('insertNewFeed($insertFeed)');
+    final newId = await into(feed).insert(insertFeed);
     return newId;
   }
 
   Future<int> updateFeed(int feedId, FeedCompanion feedCompanion) => (update(feed)..where((tbl) => tbl.id.equals(feedId))).write(feedCompanion);
-  Future<int> deleteFeed(int feedId) => (delete(feed)..where((tbl) => tbl.id.equals(feedId))).go();
+  Future<int> deleteFeed(FeedEncode feedEncode) async {
+    if (feedEncode.id != null) {
+      await (delete(article)..where((tbl) => tbl.parent.equals(feedEncode.id!))).go();
+      return (delete(feed)..where((tbl) => tbl.id.equals(feedEncode.id))).go();
+    }
+    return -1;
+  }
+
   Future<int> markAllRead(int feedId) => (update(article)..where((tbl) => tbl.parent.equals(feedId))).write(ArticleCompanion(status: Value(ArticleTableStatus.READ)));
   Future<FeedData?> fetchFeed(int id) => (select(feed)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
-  Stream<List<FeedData>> feeds() => (select(feed)
+  Future<List<FeedData>> feeds() => (select(feed)
         // ..where((tbl) => tbl.status.isSmallerOrEqualValue( ArticleTableStatus.READ))
         ..orderBy([(tbl) => OrderingTerm.asc(tbl.title)]))
-      .watch();
+      .get();
 
-  Future<int> insertArticle(ArticleCompanion articleCompanion) async => into(article).insert(articleCompanion);
+  Future<int> insertArticle(ArticleCompanion articleCompanion) async {
+    _log.fine('insertArticle($articleCompanion)');
+    return into(article).insert(articleCompanion);
+  }
+
   Future<int> updateArticleStatus({required int articleId, int status = ArticleTableStatus.READ}) => (update(article)..where((tbl) => tbl.id.equals(articleId))).write(ArticleCompanion(status: Value(status)));
-  Stream<List<ArticleData>> articles({int? feedId, required int status}) => feedId == null
-      ? ((select(article)
+  Future<List<ArticleData>> fetchActiveArticles(int feedId) async => (select(article)..where((tbl) => tbl.parent.equals(feedId) & tbl.active.equals(true))).get();
+  Future<List<ArticleData>> articles({int? feedId, int status = ArticleTableStatus.UNREAD}) => (feedId == null
+          ? ((select(article)
             ..where((tbl) => tbl.status.equals(status))
             ..orderBy([(tbl) => status == ArticleTableStatus.READ ? OrderingTerm.desc(tbl.pubDate) : OrderingTerm.asc(tbl.pubDate)])))
-          .watch()
-      : (select(article)
+          : (select(article)
             ..where((tbl) => tbl.parent.equals(feedId) & tbl.status.equals(status))
-            ..orderBy([(tbl) => status == ArticleTableStatus.READ ? OrderingTerm.desc(tbl.pubDate) : OrderingTerm.asc(tbl.pubDate)]))
-          .watch();
+            ..orderBy([(tbl) => status == ArticleTableStatus.READ ? OrderingTerm.desc(tbl.pubDate) : OrderingTerm.asc(tbl.pubDate)])))
+      .get();
 
   Stream<ArticleData> fetchArticle({required int articleId}) => (select(article)..where((tbl) => tbl.id.equals(articleId))).watchSingle();
 
-  Future<int> updateFeedFav(int feedFavId, FeedFavCompanion feedFavCompanion) => (update(feedFav)..where((tbl) => tbl.id.equals(feedFavId))).write(feedFavCompanion);
+  // Future<int> updateFeedFav(int feedFavId, FeedFavCompanion feedFavCompanion) => (update(feedFav)..where((tbl) => tbl.id.equals(feedFavId))).write(feedFavCompanion);
 
   Future<int> insertCategory(CategoryCompanion categoryCompanion) => into(category).insert(categoryCompanion);
   Future<int> updateCategory({required categoryId, required CategoryCompanion categoryCompanion}) => (update(category)..where((tbl) => tbl.id.equals(categoryId))).write(categoryCompanion);
@@ -126,33 +135,33 @@ class AppDb extends _$AppDb {
   Future<int> updateTweetStatus(int id) => (update(tweet)..where((tbl) => tbl.tweetId.equals(id))).write(TweetCompanion(status: Value(TweetTableStatus.READ)));
   Future<TweetUserData?> fetchTweetUser(int id) => (select(tweetUser)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   // Stream<List<TweetData>> tweets() => select(tweet).watch();
-  extractJSON(String filename) async {
-    _log.info('extractJSON($filename)');
-    final res = await select(feed).join([innerJoin(feedFav, feedFav.feedId.equalsExp(feed.id))]).get();
-    final json = res.map((row) => {'url': row.readTable(feed).url, 'fav': row.readTable(feedFav).url}).toList();
-    File(filename).writeAsStringSync(jsonEncode(json));
-  }
+  // extractJSON(String filename) async {
+  //   _log.info('extractJSON($filename)');
+  //   final res = await select(feed).join([innerJoin(feedFav, feedFav.feedId.equalsExp(feed.id))]).get();
+  //   final json = res.map((row) => {'url': row.readTable(feed).url, 'fav': row.readTable(feedFav).url}).toList();
+  //   File(filename).writeAsStringSync(jsonEncode(json));
+  // }
 
   Future<int> deleteAllReadArticles({int? feedId}) =>
       feedId == null ? (delete(article)..where((tbl) => tbl.active.equals(true) & tbl.status.equals(ArticleTableStatus.READ))).go() : (delete(article)..where((tbl) => tbl.active.equals(true) & tbl.parent.equals(feedId) & tbl.status.equals(ArticleTableStatus.READ))).go();
 
-  Future<int> importJSON(String filename) async {
-    _log.info('importJSON($filename)');
-    int amount = 0;
-    final file = File(filename);
-    if (file.existsSync()) {
-      final json = jsonDecode(file.readAsStringSync());
-      if (json is List) {
-        for (int i = 0; i < json.length; i++) {
-          if (json[i]['url'] != null) {
-            await RSSNetwork.updateFeed(this, FeedData(title: '', url: json[i]['url']), imgUrl: json[i]['fav']);
-            amount++;
-          }
-        }
-      }
-    }
-    return amount;
-  }
+  // Future<int> importJSON(String filename) async {
+  //   _log.info('importJSON($filename)');
+  //   int amount = 0;
+  //   final file = File(filename);
+  //   if (file.existsSync()) {
+  //     final json = jsonDecode(file.readAsStringSync());
+  //     if (json is List) {
+  //       for (int i = 0; i < json.length; i++) {
+  //         if (json[i]['url'] != null) {
+  //           await RSSNetwork.updateFeed(this, FeedData(title: '', url: json[i]['url']), imgUrl: json[i]['fav']);
+  //           amount++;
+  //         }
+  //       }
+  //     }
+  //   }
+  //   return amount;
+  // }
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -178,6 +187,13 @@ class AppDb extends _$AppDb {
           //   into(feedFav).insert(fav);
           // });
         }
+        if (from < 7) {
+          _log.info('migration version<7: $from');
+          await m.addColumn(feed, feed.feedFav);
+          await customUpdate('UPDATE feed SET feed_fav= (SELECT url FROM feed_fav WHERE feed_id=feed.id)');
+          await customUpdate('UPDATE article SET active=true');
+          this.customStatement('DROP TABLE feed_fav');
+        }
       });
 }
 
@@ -190,16 +206,4 @@ LazyDatabase _openConnection() {
     final file = File(p.join(dbFolder.path, kReleaseMode ? 'rss_db.sqlite' : 'rss_db_debug.sqlite'));
     return VmDatabase(file);
   });
-}
-
-abstract class ArticleTableStatus {
-  static const READ = -1;
-  static const UNREAD = 0;
-  static const FAVORITE = 1;
-}
-
-abstract class TweetTableStatus {
-  static const READ = -1;
-  static const UNREAD = 0;
-  static const RETWEET = 1;
 }

@@ -1,7 +1,5 @@
 import 'package:html_unescape/html_unescape.dart';
 import 'package:logging/logging.dart';
-import 'package:moor/moor.dart' as moor;
-import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/xml_mapper/base_mapper.dart';
 import 'package:xml/xml.dart';
 
@@ -115,16 +113,16 @@ class ItemMapper extends XMLBaseMapper {
     });
     return item;
   }
-  ArticleCompanion toArticleCompanion(int parent) => ArticleCompanion(
-        parent: moor.Value(parent),
-        title: moor.Value(title!),
-        url: moor.Value(link),
-        guid: moor.Value(guid ?? link!),
-        description: moor.Value(description),
-        creator: moor.Value(author),
-        pubDate: moor.Value(pubDate),
-        category: moor.Value(category),
-        encoded: moor.Value(encoded),
-      );
+  // ArticleCompanion toArticleCompanion(int parent) => ArticleCompanion(
+  //       parent: moor.Value(parent),
+  //       title: moor.Value(title!),
+  //       url: moor.Value(link),
+  //       guid: moor.Value(guid ?? link!),
+  //       description: moor.Value(description),
+  //       creator: moor.Value(author),
+  //       pubDate: moor.Value(pubDate),
+  //       category: moor.Value(category),
+  //       encoded: moor.Value(encoded),
+  //     );
   // addArticle(newId, item.title!, item.link, item.guid ?? item.link!, item.description, item.author, item.pubDate, item.category, item.encoded, null);
 }

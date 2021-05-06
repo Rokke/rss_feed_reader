@@ -1,14 +1,11 @@
-CREATE TABLE feed(id INTEGER PRIMARY KEY, title TEXT NOT NULL, url TEXT NOT NULL, description TEXT, link TEXT, language TEXT, category TEXT, ttl INT, last_build_date INT, pub_date INT, status INTEGER DEFAULT 0, last_check INT);
+CREATE TABLE feed(id INTEGER PRIMARY KEY, title TEXT NOT NULL, url TEXT NOT NULL, description TEXT, link TEXT, language TEXT, category TEXT, ttl INT, last_build_date INT, pub_date INT, status INTEGER DEFAULT 0, last_check INT, feed_fav TEXT);
 CREATE UNIQUE INDEX idx_feed_url ON feed (url);
 
-CREATE TABLE article(id INTEGER PRIMARY KEY, parent INTEGER NOT NULL REFERENCES feed(id), title TEXT NOT NULL, url TEXT, guid TEXT NOT NULL, description TEXT, creator TEXT, pub_date INT, category TEXT, encoded TEXT, status INT DEFAULT 0, active BOOL NOT NULL DEFAULT true);
+CREATE TABLE article(id INTEGER PRIMARY KEY, parent INTEGER NOT NULL REFERENCES feed(id), title TEXT NOT NULL, url TEXT NOT NULL, guid TEXT NOT NULL, description TEXT, creator TEXT, pub_date INT, category TEXT, encoded TEXT, status INT DEFAULT 0, active BOOL NOT NULL DEFAULT true);
 CREATE UNIQUE INDEX idx_article_id ON article(parent, url);
 
 CREATE TABLE category(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, display_name TEXT, color INT);
 CREATE UNIQUE INDEX idx_category_text ON category(name);
-
-CREATE TABLE feed_fav(id INTEGER PRIMARY KEY, feed_id INTEGER REFERENCES feed(id) NOT NULL, url TEXT NOT NULL);
-CREATE UNIQUE INDEX idx_feed_fav_id ON feed_fav(feed_id);
 
 CREATE TABLE tweet_user(id INTEGER PRIMARY KEY, tweet_user_id int NOT NULL, username TEXT NOT NULL, name TEXT NOT NULL, display_name TEXT, profile_url TEXT, status INT DEFAULT 0, ttl INT DEFAULT 10, since_id INT NOT NULL);
 CREATE UNIQUE INDEX idx_tweet_user_id ON tweet_user(tweet_user_id);
@@ -21,6 +18,9 @@ fetchOldestFeed(:msEpochNow AS INT): SELECT id, (:msEpochNow - (coalesce(last_ch
 numberOfArticlesStatus(:feed_id AS INT OR NULL): SELECT COUNT(*) FROM article WHERE (:feed_id is NULL OR parent=:feed_id) AND ifnull(status,0)==:status;
 
 /*
+CREATE TABLE feed_fav(id INTEGER PRIMARY KEY, feed_id INTEGER REFERENCES feed(id) NOT NULL, url TEXT NOT NULL);
+CREATE UNIQUE INDEX idx_feed_fav_id ON feed_fav(feed_id);
+
 fetchOldestTweetUser(:msEpochNow AS INT): SELECT id, (:msEpochNow - (coalesce(last_check,0) + (coalesce(ttl,30)*60000))) as total FROM tweet_user WHERE total>0 ORDER BY total DESC LIMIT 1;
 CREATE TABLE tweet(tweet_id int PRIMARY KEY NOT NULL, parent INTEGER REFERENCES tweet_user(id) NOT NULL);
 CREATE UNIQUE INDEX idx_tweet_id ON tweet(parent,tweet_id);

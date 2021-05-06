@@ -1,6 +1,4 @@
 import 'package:logging/logging.dart';
-import 'package:moor/moor.dart' as moor;
-import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/xml_mapper/base_mapper.dart';
 import 'package:rss_feed_reader/models/xml_mapper/item_mapper.dart';
 import 'package:xml/xml.dart';
@@ -127,16 +125,16 @@ class ChannelMapper extends XMLBaseMapper {
     return channel;
   }
   // bool equals(FeedData feed) => feed.pubDate == pubDate && feed.link == (atomlink ?? link);
-  FeedCompanion toFeedCompanion({String? url}) => FeedCompanion(
-        title: moor.Value(title!),
-        description: moor.Value(description),
-        category: moor.Value(category),
-        ttl: moor.Value(ttl),
-        pubDate: moor.Value(pubDate),
-        link: moor.Value(link ?? atomlink),
-        lastBuildDate: moor.Value(lastBuildDate),
-        language: moor.Value(language),
-      );
+  // FeedEn toFeedCompanion({String? url}) => FeedCompanion(
+  //       title: moor.Value(title!),
+  //       description: moor.Value(description),
+  //       category: moor.Value(category),
+  //       ttl: moor.Value(ttl),
+  //       pubDate: moor.Value(pubDate),
+  //       link: moor.Value(link ?? atomlink),
+  //       lastBuildDate: moor.Value(lastBuildDate),
+  //       language: moor.Value(language),
+  //     );
   @override
   String toString() {
     return 'Channel($description, $title, $link, $language, $updatePeriod, $atomlink, $textInput, $generator, $category, $lastBuildDate, $ttl, $updateFrequency, $pubDate, [${items.length}])';

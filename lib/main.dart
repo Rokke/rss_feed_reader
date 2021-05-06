@@ -8,7 +8,7 @@ import 'package:logging/logging.dart';
 import 'package:rss_feed_reader/screens/home.dart';
 
 void _startLogger() async {
-  Logger.root.level = kDebugMode ? Level.FINEST : Level.INFO;
+  Logger.root.level = kDebugMode ? Level.FINEST : Level.FINE;
   Logger.root.onRecord.listen((event) async {
     debugPrint('[${event.loggerName}] ${event.level} ${event.time.hour.toString().padLeft(2, '0')}:${event.time.minute.toString().padLeft(2, '0')}:${event.time.second.toString().padLeft(2, '0')},${event.time.millisecond} ${event.message}' + (event.error == null ? '' : ', ERR: ${event.error}'));
     if (Platform.isWindows) {

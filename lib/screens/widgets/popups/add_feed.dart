@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/tweet_encoding.dart';
-import 'package:rss_feed_reader/providers/network.dart';
+import 'package:rss_feed_reader/providers/feed_list.dart';
 import 'package:rss_feed_reader/providers/tweet_list.dart';
 
 // const static YOUTUBE_RSS_URL='https://www.youtube.com/feeds/videos.xml?channel_id=';
-class AddFeedPopup extends ConsumerWidget {
+class AddFeedPopup extends StatelessWidget {
   const AddFeedPopup({Key? key}) : super(key: key);
   static const HERO_TAG = 'popupHeroAddFeed';
 
   @override
-  Widget build(BuildContext context, ScopedReader watch) {
+  Widget build(BuildContext context) {
     TextEditingController txtUrl = TextEditingController();
     TextEditingController txtTwitterUserId = TextEditingController();
     TextEditingController txtTwitterUsername = TextEditingController();
@@ -52,9 +51,10 @@ class AddFeedPopup extends ConsumerWidget {
                                   if (constraints.maxWidth > 400)
                                     ElevatedButton(
                                         onPressed: () async {
-                                          if (txtUrl.text.length > 10)
-                                            RSSNetwork.updateFeed(context.read(rssDatabase), FeedData(title: '', url: txtUrl.text));
-                                          else {
+                                          if (txtUrl.text.length > 10) {
+                                            final feedProvider = context.read(providerFeedHeader);
+                                            feedProvider.updateOrCreateFeed(null, url: txtUrl.text);
+                                          } else {
                                             TweetUserEncode? foundUser;
                                             final tweetHead = context.read(providerTweetHeader);
                                             if (txtTwitterUserId.text.length > 0 && int.tryParse(txtTwitterUserId.text) != null)

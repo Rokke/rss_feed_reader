@@ -30,7 +30,7 @@ String smartDateTime(DateTime dt) {
     return timeFormat(dt);
 }
 
-String timeFormat(DateTime dt, {bool ignoreSeconds = false}) => '${dt.hour.toString().padLeft(2, "0")}:${dt.minute.toString().padLeft(2, "0")}${ignoreSeconds ? '' : dt.second.toString().padLeft(2, "0")}';
+String timeFormat(DateTime dt, {bool ignoreSeconds = false}) => '${dt.hour.toString().padLeft(2, "0")}:${dt.minute.toString().padLeft(2, "0")}${ignoreSeconds ? '' : ':' + dt.second.toString().padLeft(2, "0")}';
 
 String fetchHostUrl(String fullLink) {
   String url;
