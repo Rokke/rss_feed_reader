@@ -12,9 +12,9 @@ class ArticleListItem extends StatelessWidget {
   final Function() onSelectedArticle;
   const ArticleListItem({required this.article, required this.onRemoveArticle, required this.onSelectedArticle});
 
-  static articleContainer(BuildContext context, ArticleEncode article, {Function()? onRemoveArticle, bool isSelected = false, Function()? onSelectedArticle}) => Container(
+  static Widget articleContainer(BuildContext context, ArticleEncode article, {Function()? onRemoveArticle, bool isSelected = false, Function()? onSelectedArticle}) => Container(
         decoration: BoxDecoration(color: isSelected ? Colors.blue[900] : Colors.blue, borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.all(2),
+        margin: const EdgeInsets.all(2),
         child: GestureDetector(
           onTap: isSelected && onSelectedArticle != null ? null : () => onSelectedArticle!(),
           child: Card(
@@ -27,11 +27,10 @@ class ArticleListItem extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: article.parent.feedFav!,
                           fit: BoxFit.fitWidth,
-                          alignment: Alignment.center,
                           width: 30,
                           errorWidget: (_, __, ___) => Container(),
                         )
-                      : Icon(Icons.visibility),
+                      : const Icon(Icons.visibility),
                   dense: true,
                   title: Text(article.title),
                   subtitle: Text(article.url),
@@ -40,13 +39,13 @@ class ArticleListItem extends StatelessWidget {
                   //   onPressed: () => article.status != ArticleTableStatus.UNREAD ? context.read(rssDatabase).updateArticleStatus(articleId: article.id!, status: ArticleTableStatus.UNREAD) : onRemoveArticle(),
                   // ),
                 ),
-                if (article.category != null) Positioned(right: 50, top: 0, child: Wrap(children: article.category!.split(',').map((e) => CategoryWidget(article.id!, e)).toList())),
+                if (article.category != null) Positioned(right: 50, top: 0, child: Wrap(children: article.category!.split(',').map((e) => CategoryWidget(article.id, e)).toList())),
                 Positioned(
                   right: 50,
                   bottom: 0,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    margin: EdgeInsets.all(2),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    margin: const EdgeInsets.all(2),
                     decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(3)),
                     child: Text(dateTimeFormat(DateTime.fromMillisecondsSinceEpoch(article.pubDate))),
                   ),
@@ -59,7 +58,7 @@ class ArticleListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final feedProvider = context.read(providerFeedHeader);
-    ValueNotifier<bool> selectedNotifier = ValueNotifier(false);
+    final selectedNotifier = ValueNotifier(false);
     try {
       return ValueListenableBuilder(
           valueListenable: feedProvider.selectedArticleIndexNotifier,
@@ -70,7 +69,7 @@ class ArticleListItem extends StatelessWidget {
           child: ValueListenableBuilder(valueListenable: selectedNotifier, builder: (context, bool selected, _) => articleContainer(context, article, onRemoveArticle: onRemoveArticle, isSelected: selected, onSelectedArticle: onSelectedArticle)));
     } catch (error) {
       debugPrint('Error: $article');
-      return Container(child: Text('error: $error'));
+      return Text('error: $error');
     }
   }
 }

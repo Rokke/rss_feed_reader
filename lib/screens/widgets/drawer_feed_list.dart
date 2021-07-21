@@ -18,11 +18,11 @@ class DrawerListItems extends ConsumerWidget {
       valueListenable: feedSelected,
       builder: (context, bool isFeed, child) => Column(
         children: [
-          if (twitterRef.tweetUsers.length > 0)
+          if (twitterRef.tweetUsers.isNotEmpty)
             Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
               ElevatedButton.icon(
                 onPressed: !feedSelected.value ? () => feedSelected.value = true : null,
-                icon: Icon(Icons.rss_feed, color: Colors.red),
+                icon: const Icon(Icons.rss_feed, color: Colors.red),
                 label: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text('RSS (${feeds.length})'),
@@ -30,7 +30,7 @@ class DrawerListItems extends ConsumerWidget {
               ),
               ElevatedButton.icon(
                   onPressed: feedSelected.value ? () => feedSelected.value = false : null,
-                  icon: Image(
+                  icon: const Image(
                     image: AssetImage('assets/images/twitter.png'),
                     color: Colors.blue,
                   ),
@@ -42,13 +42,14 @@ class DrawerListItems extends ConsumerWidget {
           Flexible(
             child: isFeed
                 ? AnimatedList(
+                    shrinkWrap: true,
                     key: context.read(providerFeedHeader).feedKey,
                     initialItemCount: feeds.length,
                     itemBuilder: (BuildContext context, int index, animation) {
-                      return SizeTransition(sizeFactor: animation, child: Container(margin: EdgeInsets.symmetric(horizontal: 10, vertical: 3), child: FeedListItem(feed: feeds[index])));
+                      return SizeTransition(sizeFactor: animation, child: Container(margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), child: FeedListItem(feed: feeds[index])));
                     },
                   )
-                : TwitterUserWidget(),
+                : const TwitterUserWidget(),
           ),
         ],
       ),

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moor/moor.dart' as moor;
+import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/screens/widgets/popups/color_picker.dart';
 import 'package:rss_feed_reader/utils/popup_card.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rss_feed_reader/database/database.dart';
 
-final categoryProvider = StreamProvider.autoDispose.family<CategoryData?, String>((ref, category) {
+final categoryProvider = FutureProviderFamily<CategoryData?, String>((ref, category) {
   final db = ref.watch(rssDatabase);
-  final ret = db.fetchCategoryByName(categoryName: category);
+  final ret = db.fetchCategoryByName(categoryName: category).single;
   return ret;
 });
 
@@ -26,30 +26,32 @@ class CategoryWidget extends ConsumerWidget {
         return Container(
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(3)),
             child: GestureDetector(
-                child: Hero(
-                    tag: '${CategoryPopup.HERO_TAG}$articleId$categoryName',
-                    child: Material(
-                        color: backgroundColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: SingleChildScrollView(
-                            child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 4),
-                                margin: EdgeInsets.all(2),
-                                child: Text(
-                                  category?.displayName ?? categoryName,
-                                  style: TextStyle(color: textColor),
-                                ))))),
-                onTap: () async {
-                  final ret = await Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-                    return CategoryPopup(articleId, category ?? CategoryData(name: categoryName));
-                  }));
-                  if (ret != null) {
-                    if (category != null)
-                      context.read(rssDatabase).updateCategory(categoryId: category.id, categoryCompanion: CategoryCompanion(name: moor.Value(categoryName), displayName: moor.Value(category.displayName), color: ret));
-                    else
-                      context.read(rssDatabase).insertCategory(CategoryCompanion.insert(name: categoryName, displayName: moor.Value(categoryName), color: ret));
-                  }
+              onTap: () async {
+                final ret = await Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                  return CategoryPopup(articleId, category ?? CategoryData(id: 0, name: categoryName));
                 }));
+                if (ret is int) {
+                  if (category != null) {
+                    await context.read(rssDatabase).updateCategory(categoryId: category.id, categoryCompanion: CategoryCompanion(name: moor.Value(categoryName), displayName: moor.Value(category.displayName), color: moor.Value(ret)));
+                  } else {
+                    await context.read(rssDatabase).insertCategory(CategoryCompanion.insert(name: categoryName, displayName: moor.Value(categoryName), color: moor.Value(ret)));
+                  }
+                }
+              },
+              child: Hero(
+                  tag: '${CategoryPopup.HERO_TAG}$articleId$categoryName',
+                  child: Material(
+                      color: backgroundColor,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: SingleChildScrollView(
+                          child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              margin: const EdgeInsets.all(2),
+                              child: Text(
+                                category?.displayName ?? categoryName,
+                                style: TextStyle(color: textColor),
+                              ))))),
+            ));
       },
       loading: () => Container(),
       error: (err, _) {

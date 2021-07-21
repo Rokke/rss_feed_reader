@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class HeroDialogRoute<T> extends PageRoute<T> {
   final WidgetBuilder _builder;
 
-  HeroDialogRoute({required builder, RouteSettings? settings, bool fullscreenDialog = false})
+  HeroDialogRoute({required WidgetBuilder builder, RouteSettings? settings, bool fullscreenDialog = false})
       : _builder = builder,
         super(settings: settings, fullscreenDialog: fullscreenDialog);
   @override
@@ -24,5 +24,5 @@ class HeroDialogRoute<T> extends PageRoute<T> {
   bool get maintainState => true;
 
   @override
-  Duration get transitionDuration => Duration(milliseconds: 300);
+  Duration get transitionDuration => const Duration(milliseconds: 300);
 }

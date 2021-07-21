@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rss_feed_reader/models/tweet_encoding.dart';
+import 'package:news_common/tweet_encode.dart';
 import 'package:rss_feed_reader/providers/feed_list.dart';
 import 'package:rss_feed_reader/providers/tweet_list.dart';
 
@@ -11,9 +11,7 @@ class AddFeedPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController txtUrl = TextEditingController();
-    TextEditingController txtTwitterUserId = TextEditingController();
-    TextEditingController txtTwitterUsername = TextEditingController();
+    final txtUrl = TextEditingController(), txtTwitterUserId = TextEditingController(), txtTwitterUsername = TextEditingController();
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -25,20 +23,20 @@ class AddFeedPopup extends StatelessWidget {
                 child: LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) => SingleChildScrollView(
                     child: Container(
-                        constraints: BoxConstraints.tightFor(width: 500, height: 400),
+                        constraints: const BoxConstraints.tightFor(width: 500, height: 400),
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              TextField(controller: txtUrl, decoration: InputDecoration(labelText: 'RSS url')),
+                              TextField(controller: txtUrl, decoration: const InputDecoration(labelText: 'RSS url')),
                               if (constraints.maxWidth > 400)
                                 Row(
                                   children: [
-                                    Flexible(child: TextField(controller: txtTwitterUserId, decoration: InputDecoration(labelText: 'Twitter userid'))),
-                                    SizedBox(width: 10),
-                                    Flexible(child: TextField(controller: txtTwitterUsername, decoration: InputDecoration(labelText: 'Twitter username'))),
+                                    Flexible(child: TextField(controller: txtTwitterUserId, decoration: const InputDecoration(labelText: 'Twitter userid'))),
+                                    const SizedBox(width: 10),
+                                    Flexible(child: TextField(controller: txtTwitterUsername, decoration: const InputDecoration(labelText: 'Twitter username'))),
                                   ],
                                 ),
                               Flexible(
@@ -47,33 +45,34 @@ class AddFeedPopup extends StatelessWidget {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  ElevatedButton(child: Text('Tilbake'), onPressed: () => Navigator.pop(context, null)),
+                                  ElevatedButton(onPressed: () => Navigator.pop(context, null), child: const Text('Tilbake')),
                                   if (constraints.maxWidth > 400)
                                     ElevatedButton(
                                         onPressed: () async {
                                           if (txtUrl.text.length > 10) {
                                             final feedProvider = context.read(providerFeedHeader);
-                                            feedProvider.updateOrCreateFeed(null, url: txtUrl.text);
+                                            await feedProvider.updateOrCreateFeed(null, url: txtUrl.text);
                                           } else {
                                             TweetUserEncode? foundUser;
                                             final tweetHead = context.read(providerTweetHeader);
-                                            if (txtTwitterUserId.text.length > 0 && int.tryParse(txtTwitterUserId.text) != null)
+                                            if (txtTwitterUserId.text.isNotEmpty && int.tryParse(txtTwitterUserId.text) != null) {
                                               foundUser = await tweetHead.fetchTweetUsername(id: int.parse(txtTwitterUserId.text));
-                                            else if (txtTwitterUsername.text.length > 3) foundUser = await tweetHead.fetchTweetUsername(username: txtTwitterUsername.text);
+                                            } else if (txtTwitterUsername.text.length > 3) foundUser = await tweetHead.fetchTweetUsername(username: txtTwitterUsername.text);
                                             if (foundUser != null) {
                                               tweetHead.addNewUser(foundUser);
-                                            } else
+                                            } else {
                                               return;
+                                            }
                                           }
                                           Navigator.pop(
                                               context,
                                               txtUrl.text.length > 10
                                                   ? txtUrl.text
-                                                  : txtTwitterUserId.text.length > 0
+                                                  : txtTwitterUserId.text.isNotEmpty
                                                       ? txtTwitterUserId.text
                                                       : txtTwitterUsername.text);
                                         },
-                                        child: Text('Legg til RSS/Tweet userid')),
+                                        child: const Text('Legg til RSS/Tweet userid')),
                                 ],
                               ),
                             ],

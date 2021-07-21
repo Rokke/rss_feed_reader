@@ -11,8 +11,8 @@ class ChannelMapper extends XMLBaseMapper {
 
   ChannelMapper();
   factory ChannelMapper.fromXML(XmlElement xEl) {
-    ChannelMapper channel = ChannelMapper();
-    xEl.children.forEach((xNode) {
+    final channel = ChannelMapper();
+    for (final xNode in xEl.children) {
       if (xNode is XmlElement) {
         switch (xNode.name.toString()) {
           case 'title':
@@ -47,7 +47,7 @@ class ChannelMapper extends XMLBaseMapper {
             break;
           case 'category':
           case 'itunes:category':
-            final String text = xNode.innerText.isEmpty ? (xNode.getAttribute('text') ?? '') : xNode.innerText;
+            final text = xNode.innerText.isEmpty ? (xNode.getAttribute('text') ?? '') : xNode.innerText;
             channel.category = ((channel.category?.isEmpty ?? true) ? '' : ',') + text;
             break;
           case 'generator':
@@ -61,28 +61,31 @@ class ChannelMapper extends XMLBaseMapper {
             break;
           case 'lastBuildDate':
             final dt = channel.parseRSSString(xNode.innerText);
-            if (dt != null)
+            if (dt != null) {
               channel.lastBuildDate = dt.millisecondsSinceEpoch;
-            else
+            } else {
               _log.warning('Error lastBuildDate format: ${xNode.innerXml}');
+            }
             break;
           case 'pubDate':
           case 'updated':
             final dt = channel.parseRSSString(xNode.innerText);
-            if (dt != null)
+            if (dt != null) {
               channel.pubDate = dt.millisecondsSinceEpoch;
-            else
+            } else {
               _log.warning('Error pubDate format: ${xNode.innerText}');
+            }
             break;
           case 'image':
           case 'itunes:image':
             if (channel.image == null) {
-              if (xNode.getElement("url")?.innerText.isNotEmpty ?? false)
-                channel.image = xNode.getElement("url")!.innerText;
-              else if (xNode.getElement("href")?.innerText.isNotEmpty ?? false)
-                channel.image = xNode.getElement("href")!.innerText;
-              else
+              if (xNode.getElement('url')?.innerText.isNotEmpty ?? false) {
+                channel.image = xNode.getElement('url')!.innerText;
+              } else if (xNode.getElement('href')?.innerText.isNotEmpty ?? false) {
+                channel.image = xNode.getElement('href')!.innerText;
+              } else {
                 channel.image = xNode.innerText.isEmpty ? xNode.getAttribute('href') : xNode.innerText;
+              }
             }
             break;
           case 'cloud':
@@ -121,7 +124,7 @@ class ChannelMapper extends XMLBaseMapper {
             _log.info('Ukjent channel element: ${xNode.name}=>${xNode.innerXml}');
         }
       } else if (xNode.nodeType != XmlNodeType.TEXT || xNode.text.trim().isNotEmpty) _log.info('Ukjent nodetype: ${xNode.nodeType}=>${xNode.outerXml}');
-    });
+    }
     return channel;
   }
   // bool equals(FeedData feed) => feed.pubDate == pubDate && feed.link == (atomlink ?? link);

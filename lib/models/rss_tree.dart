@@ -19,18 +19,19 @@ class RSSHead {
   final Reader read;
   bool busy = false;
   RSSHead(this.read); // : super(RSSTree());
-  startMonitoring({Duration? postponeStart}) async {
+  Future<void> startMonitoring({Duration? postponeStart}) async {
     _log.info('startMonitoring($postponeStart)');
     read(monitoringRunning).state = true;
     final feedProvider = read(providerFeedHeader);
     if (postponeStart != null) await Future.delayed(postponeStart);
-    _timer = Timer.periodic(Duration(seconds: 10), (_) async {
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
       if (!busy) {
         busy = true;
         try {
           if (!await feedProvider.findFeedToUpdate()) await read(providerTweetHeader).checkAndUpdateTweet(isAuto: true);
         } catch (err) {
           _log.severe('Monitor error', err);
+          stopMonitoring();
         } finally {
           busy = false;
         }
@@ -43,7 +44,7 @@ class RSSHead {
   // Future<bool> findTweetToUpdate() async {
   // }
 
-  stopMonitoring() {
+  void stopMonitoring() {
     debugPrint('stopMonitoring');
     _timer?.cancel();
     _timer = null;
@@ -54,7 +55,7 @@ class RSSHead {
 final rssProvider = Provider<RSSHead>((ref) {
   final rssHead = RSSHead(ref.read);
   ref.onDispose(() {
-    print('disprss');
+    debugPrint('onDispose');
     rssHead.stopMonitoring();
   });
   return rssHead;

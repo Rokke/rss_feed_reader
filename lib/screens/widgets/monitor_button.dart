@@ -12,10 +12,11 @@ class MonitorButton extends ConsumerWidget {
         icon: Icon(running ? Icons.pause : Icons.play_arrow),
         onPressed: () {
           debugPrint('_toggleStartStop($running)');
-          if (!running)
+          if (!running) {
             context.read(rssProvider).startMonitoring();
-          else
+          } else {
             context.read(rssProvider).stopMonitoring();
+          }
         });
   }
 }

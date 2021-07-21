@@ -40,7 +40,7 @@ class XMLBaseMapper {
       return DateTime.tryParse(val);
     } catch (err) {
       _log.severe('Illegal date: $val', err);
-      throw err;
+      rethrow;
     }
   }
 }

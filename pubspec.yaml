@@ -8,35 +8,44 @@ version: 1.1.0+4
 environment:
   sdk: ">=2.12.0-259.16.beta <3.0.0"
 dependencies:
-  flutter:
-    sdk: flutter
   cached_network_image: ^3.0.0
   collection: ^1.15.0
   crypto: ^3.0.1
   desktop_window: ^0.4.0
   dio: ^4.0.0-beta2
-  flutter_colorpicker: ^0.4.0-nullsafety.0
+  flutter:
+    sdk: flutter
+  flutter_colorpicker: ^0.5.0
   flutter_html: ^2.0.0-nullsafety.0
   flutter_linkify: ^5.0.2
   flutter_riverpod: ^0.14.0
   html_unescape: ^2.0.0
+  http: ^0.13.3
+  lint: ^1.5.3
   logging: ^1.0.1
-  moor: ^4.1.0
+  moor: ^4.3.2
+  news_common:
+    path: ../news_common
   package_info_plus: ^1.0.1
   path: ^1.8.0
-  sqlite3_flutter_libs: ^0.4.0+1
-  url_launcher: ^6.0.2
+  path_provider: ^2.0.1
+  pedantic: ^1.11.0
+  sqlite3_flutter_libs: ^0.5.0
+  url_launcher: ^6.0.3
+  win32: ^2.0.5
   xml: ^5.0.2
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
   build_runner: ^2.0.1
   flutter_launcher_icons: ^0.9.0
-  moor_generator: ^4.1.0
+  flutter_test:
+    sdk: flutter
+  moor_generator: ^4.3.1
 flutter:
   uses-material-design: true
   assets:
     - assets/images/twitter.png
+    - assets/sounds/twitter.wav
+    - assets/sounds/article.wav
 flutter_icons:
   image_path: "assets/launcher_icon/app_icon.png"
   window: true

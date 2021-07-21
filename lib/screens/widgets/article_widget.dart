@@ -23,33 +23,31 @@ class ArticleView extends ConsumerWidget {
   Widget build(BuildContext context, ScopedReader watch) {
     final feedProvider = context.read(providerFeedHeader);
     return Card(
-        child: Container(
-      child: ValueListenableBuilder(
-        valueListenable: feedProvider.isInitialized,
-        builder: (context, bool initialized, child) => initialized
-            ? AnimatedList(
-                key: feedProvider.articleKey,
-                initialItemCount: feedProvider.articles.length,
-                itemBuilder: (BuildContext context, int index, animation) {
-                  return SizeTransition(
-                      sizeFactor: animation,
-                      child: ArticleListItem(
-                        article: feedProvider.articles[index],
-                        onRemoveArticle: () => feedProvider.changeArticleStatus(index: index),
-                        onSelectedArticle: () {
-                          debugPrint('onSelectedArticle: $index => ${feedProvider.articles[index].id}');
-                          feedProvider.changeSelectedArticle = index;
-                          // selected.state = SelectedArticleHelper(articles[index], (int status) => _changeArticleStatus(context, articles, index, selected, status));
-                        },
-                      ));
-                },
-              )
-            : Center(
-                child: Text(
-                'Ingen uleste RSS feed',
-                style: Theme.of(context).textTheme.headline3,
-              )),
-      ),
+        child: ValueListenableBuilder(
+      valueListenable: feedProvider.isInitialized,
+      builder: (context, bool initialized, child) => initialized
+          ? AnimatedList(
+              key: feedProvider.articleKey,
+              initialItemCount: feedProvider.articles.length,
+              itemBuilder: (BuildContext context, int index, animation) {
+                return SizeTransition(
+                    sizeFactor: animation,
+                    child: ArticleListItem(
+                      article: feedProvider.articles[index],
+                      onRemoveArticle: () => feedProvider.changeArticleStatusByIndex(index: index),
+                      onSelectedArticle: () {
+                        debugPrint('onSelectedArticle: $index => ${feedProvider.articles[index].id}');
+                        feedProvider.changeSelectedArticle = index;
+                        // selected.state = SelectedArticleHelper(articles[index], (int status) => _changeArticleStatus(context, articles, index, selected, status));
+                      },
+                    ));
+              },
+            )
+          : Center(
+              child: Text(
+              'Ingen uleste RSS feed',
+              style: Theme.of(context).textTheme.headline3,
+            )),
     ));
   }
 }

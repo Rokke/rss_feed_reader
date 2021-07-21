@@ -10,8 +10,8 @@ class ItemMapper extends XMLBaseMapper {
 
   ItemMapper();
   factory ItemMapper.fromXML(XmlElement xEl) {
-    ItemMapper item = ItemMapper();
-    xEl.children.forEach((xNode) {
+    final item = ItemMapper();
+    for (final xNode in xEl.children) {
       if (xNode is XmlElement) {
         switch (xNode.name.toString()) {
           case 'title':
@@ -31,7 +31,7 @@ class ItemMapper extends XMLBaseMapper {
             break;
           case 'atom:link':
           case 'id': // Backup if guid is replaced with atom:link from the provider
-            if (item.guid == null) item.guid = xNode.innerXml;
+            item.guid ??= xNode.innerXml;
             break;
           case 'author':
           case 'dc:creator':
@@ -45,7 +45,7 @@ class ItemMapper extends XMLBaseMapper {
             break;
           case 'category':
             final cat = xNode.innerText.split(',').where((element) => element.isNotEmpty).toList();
-            if (cat.length > 0) {
+            if (cat.isNotEmpty) {
               item.category = ((item.category == null) ? '' : '${item.category},') + cat.join(',');
             }
             break;
@@ -61,10 +61,11 @@ class ItemMapper extends XMLBaseMapper {
           case 'atom:updated':
             if (item.pubDate == null) {
               final dt = item.parseRSSString(xNode.innerText);
-              if (dt != null)
+              if (dt != null) {
                 item.pubDate = dt.millisecondsSinceEpoch;
-              else
+              } else {
                 _log.warning('Error pubDate format: ${xNode.innerXml}');
+              }
             }
             break;
           case 'media:content':
@@ -110,7 +111,7 @@ class ItemMapper extends XMLBaseMapper {
             if (!xNode.name.toString().startsWith('vg:')) _log.info('Ukjent feed element: ${xNode.name}=>${xNode.text.length > 100 ? xNode.text.substring(0, 100) + "..." : xNode.text}');
         }
       } else if (xNode.nodeType != XmlNodeType.COMMENT && xNode.outerXml.trim().isNotEmpty) _log.info('Ukjent nodetype: ${xNode.nodeType}=>${xNode.outerXml}');
-    });
+    }
     return item;
   }
   // ArticleCompanion toArticleCompanion(int parent) => ArticleCompanion(

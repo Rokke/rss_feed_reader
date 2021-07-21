@@ -1,3 +1,13 @@
+include: package:lint/analysis_options.yaml
+linter:
+  rules:
+    prefer_interpolation_to_compose_strings: false
+    constant_identifier_names: false
+
 analyzer:
+  exclude:
+    - lib/database/database.g.dart
   plugins:
     - moor
+
+#include: package:pedantic/analysis_options.yaml

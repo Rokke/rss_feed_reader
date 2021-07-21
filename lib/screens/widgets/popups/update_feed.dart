@@ -13,11 +13,8 @@ class UpdateFeedPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // FeedFavData? feedFav;
-    ValueNotifier<String?> favUrlChanged = ValueNotifier(null);
-    TextEditingController txtUrl = TextEditingController(text: feed.url);
-    TextEditingController txtTitle = TextEditingController(text: feed.title);
-    TextEditingController txtFavIcon = TextEditingController(text: feed.feedFav);
-    TextEditingController txtTtl = TextEditingController(text: feed.ttl.toString());
+    final favUrlChanged = ValueNotifier<String?>(null);
+    final txtUrl = TextEditingController(text: feed.url), txtTitle = TextEditingController(text: feed.title), txtFavIcon = TextEditingController(text: feed.feedFav), txtTtl = TextEditingController(text: feed.ttl.toString());
     // context.read(feedFavIdProvider(feed.id!)).whenData((data) {
     //   feedFav = data;
     //   if (data != null) valueUrl.value = txtFavIcon.text = data.url;
@@ -32,17 +29,17 @@ class UpdateFeedPopup extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: SingleChildScrollView(
                   child: Container(
-                      constraints: BoxConstraints.tightFor(width: 600, height: 500),
+                      constraints: const BoxConstraints.tightFor(width: 600, height: 500),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            TextField(controller: txtUrl, decoration: InputDecoration(labelText: 'RSS url')),
-                            TextField(controller: txtTitle, decoration: InputDecoration(labelText: 'Tittel')),
+                            TextField(controller: txtUrl, decoration: const InputDecoration(labelText: 'RSS url')),
+                            TextField(controller: txtTitle, decoration: const InputDecoration(labelText: 'Tittel')),
                             Row(
                               children: [
-                                Expanded(child: TextField(controller: txtFavIcon, decoration: InputDecoration(labelText: 'FavIcon'))),
+                                Expanded(child: TextField(controller: txtFavIcon, decoration: const InputDecoration(labelText: 'FavIcon'))),
                                 ValueListenableBuilder(
                                     valueListenable: favUrlChanged,
                                     builder: (context, String? changedUrlValue, _) {
@@ -52,36 +49,36 @@ class UpdateFeedPopup extends StatelessWidget {
                                           style: ButtonStyle(backgroundColor: MaterialStateColor.resolveWith((states) => Colors.purple.shade700)),
                                           // color: Colors.blue,
                                           icon: changedUrlValue == null && feed.feedFav == null
-                                              ? Icon(Icons.rss_feed, color: Colors.red)
+                                              ? const Icon(Icons.rss_feed, color: Colors.red)
                                               : Image.network(
                                                   changedUrlValue ?? feed.feedFav!,
                                                   width: 30,
                                                   fit: BoxFit.fitWidth,
                                                   errorBuilder: (err, __, ___) {
                                                     _log.warning('invalid imageurl: ${changedUrlValue ?? feed.feedFav}', err);
-                                                    return Icon(Icons.error);
+                                                    return const Icon(Icons.error);
                                                   },
                                                 ),
                                           onPressed: () {
-                                            print('new: ${txtFavIcon.text}');
+                                            debugPrint('new: ${txtFavIcon.text}');
                                             favUrlChanged.value = txtFavIcon.text;
                                           });
                                     }),
                               ],
                             ),
-                            TextField(controller: txtTtl, decoration: InputDecoration(labelText: 'TTL')),
+                            TextField(controller: txtTtl, decoration: const InputDecoration(labelText: 'TTL')),
                             Expanded(child: Container()),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                ElevatedButton(onPressed: () => Navigator.pop(context, null), child: Text('Avbryt')),
+                                ElevatedButton(onPressed: () => Navigator.pop(context, null), child: const Text('Avbryt')),
                                 ElevatedButton(
                                     onPressed: () async {
-                                      if (feed.id != null && (favUrlChanged.value != null || (txtTitle.text.isNotEmpty && txtTitle.text != feed.title) || (txtTtl.text.isNotEmpty && int.tryParse(txtTtl.text) != feed.ttl))) {
+                                      if (feed.id != null && (favUrlChanged.value != null || (txtTitle.text.isNotEmpty && txtTitle.text != feed.title) || (txtUrl.text.isNotEmpty && txtUrl.text != feed.url) || (txtTtl.text.isNotEmpty && int.tryParse(txtTtl.text) != feed.ttl))) {
                                         if (await context.read(providerFeedHeader).updateFeedInfo(feed, feedFav: favUrlChanged.value, title: txtTitle.text, url: txtUrl.text, ttl: int.tryParse(txtTtl.text))) Navigator.of(context).pop(true);
                                       }
                                     },
-                                    child: Text('Lagre')),
+                                    child: const Text('Lagre')),
                               ],
                             ),
                           ],

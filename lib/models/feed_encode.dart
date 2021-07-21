@@ -1,23 +1,24 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:moor/moor.dart';
+import 'package:news_common/news_common.dart';
 import 'package:rss_feed_reader/database/database.dart';
 import 'package:rss_feed_reader/models/xml_mapper/channel_mapper.dart';
 import 'package:rss_feed_reader/models/xml_mapper/item_mapper.dart';
 
-class FeedEncode {
-  static const TTL_DEFAULT = 30;
-  int? id;
-  final int lastBuildDate, pubDate;
-  String title, url;
-  final String? category, link, language;
-  String? feedFav, description;
+class FeedEncode extends FeedEncodeBase {
   List<ArticleActiveRead> activeArticles = [];
-  int ttl, lastCheck;
-  FeedEncode({required this.title, required this.url, required this.ttl, required this.lastCheck, required this.lastBuildDate, required this.pubDate, this.description, this.link, this.id, this.category, this.feedFav, this.language});
-  int get earliestMillisecondsSinceEpoch => lastCheck + ttl * 60000;
-  factory FeedEncode.fromChannel(ChannelMapper channel, String url) =>
-      FeedEncode(title: channel.title!, url: url, ttl: channel.ttl ?? TTL_DEFAULT, lastCheck: DateTime.now().millisecondsSinceEpoch, lastBuildDate: channel.lastBuildDate ?? 0, pubDate: channel.pubDate ?? 0, category: channel.category, link: channel.link ?? channel.atomlink, feedFav: channel.image);
+  FeedEncode({required String title, required String url, required int ttl, required int lastCheck, required int lastBuildDate, required int pubDate, String? description, String? link, int? id, String? category, String? feedFav, String? language})
+      : super(title: title, url: url, ttl: ttl, lastCheck: lastCheck, lastBuildDate: lastBuildDate, pubDate: pubDate, description: description, link: link, id: id, category: category, feedFav: feedFav, language: language);
+  factory FeedEncode.fromChannel(ChannelMapper channel, String url) => FeedEncode(
+      title: channel.title!,
+      url: url,
+      ttl: channel.ttl ?? FeedEncodeBase.TTL_DEFAULT,
+      lastCheck: DateTime.now().millisecondsSinceEpoch,
+      lastBuildDate: channel.lastBuildDate ?? 0,
+      pubDate: channel.pubDate ?? 0,
+      category: channel.category,
+      link: channel.link ?? channel.atomlink,
+      feedFav: channel.image);
   factory FeedEncode.fromDB(FeedData data) {
     try {
       return FeedEncode(
@@ -36,23 +37,9 @@ class FeedEncode {
       );
     } catch (err) {
       debugPrint('FeedEncode.fromDB exception: $data');
-      throw err;
+      rethrow;
     }
   }
-  Map<String, dynamic> toJson() => {
-        'title': title,
-        'url': url,
-        'ttl': ttl,
-        'lastCheck': lastCheck,
-        'lastBuildDate': lastBuildDate,
-        'pubDate': pubDate,
-        'description': description,
-        'link': link,
-        'id': id,
-        'category': category,
-        'language': language,
-        'feedFav': feedFav,
-      };
   FeedCompanion get toInsertCompanion => FeedCompanion(
         title: Value(title),
         description: Value(description),
@@ -64,15 +51,6 @@ class FeedEncode {
         language: Value(language),
       );
 
-  Widget? get fetchFeedFavImage => feedFav == null
-      ? null
-      : CachedNetworkImage(
-          imageUrl: feedFav!,
-          fit: BoxFit.fitWidth,
-          alignment: Alignment.center,
-          width: 30,
-          errorWidget: (_, __, ___) => Container(),
-        );
   @override
   String toString() {
     return 'FeedEncode($id,$title,$url,$link,$lastBuildDate)';
@@ -84,19 +62,12 @@ class ArticleActiveRead {
   final String url;
   int lastFoundEpoch;
 
-  ArticleActiveRead({required this.id, required this.url, this.lastFoundEpoch = 0});
+  ArticleActiveRead({required this.id, required this.url, required this.lastFoundEpoch});
 }
 
-class ArticleEncode {
-  int? id;
-  final String title, guid, url;
-  final String? creator, encoded, category;
-  String? description;
-  final FeedEncode parent;
-  final int pubDate;
-  bool active;
-
-  ArticleEncode({this.id, required this.parent, required this.title, required this.pubDate, required this.url, this.creator, this.description, this.encoded, this.category, required this.guid, this.active = true});
+class ArticleEncode extends ArticleEncodeBase {
+  ArticleEncode({int? id, required FeedEncodeBase parent, required String title, required int pubDate, required String url, String? creator, String? description, String? encoded, String? category, required String guid, bool active = true})
+      : super(id: id ?? 0, parent: parent, title: title, pubDate: pubDate, url: url, creator: creator, description: description, encoded: encoded, category: category, guid: guid, active: active);
   Future<String?> articleDescription(AppDb db) async => description ??= (await (db.select(db.article)..where((tbl) => tbl.id.equals(id))).getSingleOrNull())?.description;
   factory ArticleEncode.fromChannelItem(ItemMapper item, FeedEncode feed) {
     try {
@@ -113,7 +84,7 @@ class ArticleEncode {
       );
     } catch (err) {
       debugPrint('ArticleEncode.fromChannelItem exception: $item');
-      throw err;
+      rethrow;
     }
   }
   factory ArticleEncode.fromDB(ArticleData data, List<FeedEncode> feeds) {
@@ -132,20 +103,9 @@ class ArticleEncode {
       );
     } catch (err) {
       debugPrint('ArticleEncode.fromDB exception: $data');
-      throw err;
+      rethrow;
     }
   }
-  Map<String, dynamic> toJson() => {
-        'parent': parent.toJson(),
-        'title': title,
-        'guid': guid,
-        'url': url,
-        'description': description,
-        'creator': creator,
-        'encoded': encoded,
-        'category': category,
-        'pubDate': pubDate,
-      };
   ArticleCompanion get toInsertCompanion => ArticleCompanion(
         parent: Value(parent.id!),
         title: Value(title),
@@ -156,10 +116,11 @@ class ArticleEncode {
         pubDate: Value(pubDate),
         category: Value(category),
         encoded: Value(encoded),
+        active: Value(active),
       );
   @override
   String toString() {
-    return 'ArticleEncode($id,$title,$guid,${parent.id},$creator)';
+    return 'ArticleEncode($id,$title,$guid,${parent.id},$creator,${(active ? '' : '!') + 'active'})';
   }
 }
 
@@ -169,7 +130,7 @@ class FeedFullDecode {
   final String url;
 
   FeedFullDecode({required this.feed, required this.articles, required this.url});
-  factory FeedFullDecode.fromChannel(ChannelMapper channel, url, {FeedEncode? parentFeed}) {
+  factory FeedFullDecode.fromChannel(ChannelMapper channel, String url, {FeedEncode? parentFeed}) {
     final newFeed = FeedEncode.fromChannel(channel, url);
     return FeedFullDecode(feed: newFeed, articles: channel.items.map((item) => ArticleEncode.fromChannelItem(item, parentFeed ?? newFeed)).toList(), url: url);
   }
