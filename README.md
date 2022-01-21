@@ -1,6 +1,6 @@
 # rss_feed_reader
 
-A new Flutter project.
+This project has been merget into the Rokke/NewsApplication repository instead and is not maintained here anymore
 
 ## Getting Started
 
